@@ -55,3 +55,33 @@
 - `JUMP_CUT`: how small a tap-jump is.
 
 **Next:** Phase 2, tiles and camera.
+
+## Phase 2 – Tiles and camera
+
+**Done**
+- **Levels as text maps** (`src/world/levels/`): `#` ground, `=` one-way platform, `P` start, `F` end flag. Each map is checked when it loads (row widths, one start, no unknown letters), with clear error messages.
+- **Tile collision:** walls, floors and ceilings. The level edges act as walls, and below the level is open, so gaps are pits.
+- **One-way platforms:** jump up through them and land on top. Down + Jump drops through; on solid ground, Down + Jump is a normal jump.
+- **Camera:**
+  - A 64 px dead zone in the middle, and it looks 80 px ahead while running.
+  - Up and down, it stays on the last ground Pip stood on, so jumps don't bob the screen; it follows a very high jump, and a fall straight away.
+  - It eases into place and stops at the level edges.
+- **Test level `0-1`** (128 × 20 tiles):
+  - A start run-up and three pits.
+  - A block, a step, and a plateau with a floating block.
+  - Stacked one-way platforms up to a high route over a wide pit.
+  - A low one-way step, a low ceiling, and the end flag.
+- Falling in a pit puts Pip back at the start (a fall counter shows until lives exist). The height marks stay at the start.
+- **Tests:** 36 unit tests (12 new: reading levels and their errors, edges and pits, walls, floors and ceilings, no slipping through floors at top speed, one-way platforms and dropping through, and the camera's start, edges, dead zone, look-ahead and no bobbing). The browser test now runs right and checks the camera scrolls.
+
+**Tuning most likely to need a change** (`CAMERA` in `tuning.ts`):
+- `DEAD_ZONE_W`: how far Pip moves before the camera follows.
+- `LOOK_AHEAD`: how far ahead it looks when running.
+- `EASE`: how snappy it is.
+- `FEET_LINE`: how low on the screen Pip stands.
+
+**Notes**
+- No slopes in v1 (decided at the Phase 2 plan; they can be added later if a world needs them).
+- The start area was widened by 8 tiles so the camera has room to start moving before the first pit.
+
+**Next:** Phase 3, enemies and stomping.

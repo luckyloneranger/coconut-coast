@@ -25,6 +25,8 @@ export class PipPhysics {
   stride = 0;
   /** Rising from a jump that Jump is still holding up (letting go cuts it short). */
   private rising = false;
+  /** s left of falling through one-way platforms (after Down + Jump). */
+  dropping = 0;
 
   constructor(x: number, y: number) {
     this.x = x;
@@ -43,12 +45,14 @@ export class PipPhysics {
     return this.y + PIP.HEIGHT;
   }
 
-  update(dt: number, c: PipControls, solids: readonly Box[]): void {
+  /** `oneWays`: platforms you can jump up through and land on (only their top counts). */
+  update(dt: number, c: PipControls, solids: readonly Box[], oneWays: readonly Box[] = []): void {
+    this.dropping = Math.max(0, this.dropping - dt);
     this.steer(dt, c);
-    this.jump(dt, c);
+    this.jump(dt, c, solids, oneWays);
     this.fall(dt, c);
     this.moveX(dt, solids);
-    this.moveY(dt, solids);
+    this.moveY(dt, solids, oneWays);
     this.sinceLanding += dt;
     if (this.onGround) this.stride += Math.abs(this.vx) * dt;
   }
@@ -79,8 +83,18 @@ export class PipPhysics {
     }
   }
 
-  /** Jump if the button was pressed recently and Pip is on (or just off) the ground. */
-  private jump(dt: number, c: PipControls): void {
+  /**
+   * Jump if the button was pressed recently and Pip is on (or just off) the
+   * ground. Down + Jump on a one-way platform drops through it instead.
+   */
+  private jump(dt: number, c: PipControls, solids: readonly Box[], oneWays: readonly Box[]): void {
+    if (c.down && c.jumpPressed && this.onGround && this.standingOnlyOnOneWay(solids, oneWays)) {
+      this.dropping = PIP.DROP_THROUGH_TIME;
+      this.onGround = false;
+      this.buffer = 0;
+      this.coyote = 0;
+      return;
+    }
     this.buffer = c.jumpPressed ? PIP.JUMP_BUFFER : Math.max(0, this.buffer - dt);
     this.coyote = this.onGround ? PIP.COYOTE_TIME : Math.max(0, this.coyote - dt);
     if (this.buffer <= 0 || this.coyote <= 0) return;
@@ -112,10 +126,21 @@ export class PipPhysics {
     }
   }
 
-  private moveY(dt: number, solids: readonly Box[]): void {
+  private moveY(dt: number, solids: readonly Box[], oneWays: readonly Box[]): void {
     const wasOnGround = this.onGround;
+    const feetBefore = this.feetY;
     this.y += this.vy * dt;
     this.onGround = false;
+    // One-way platforms only stop you coming down onto their top from above.
+    if (this.vy >= 0 && this.dropping <= 0) {
+      for (const o of oneWays) {
+        if (this.x < o.x + o.w && this.x + PIP.WIDTH > o.x && feetBefore <= o.y && this.feetY > o.y) {
+          this.y = o.y - PIP.HEIGHT;
+          this.vy = 0;
+          this.onGround = true;
+        }
+      }
+    }
     for (const s of solids) {
       if (!overlaps(this.box, s)) continue;
       if (this.vy >= 0) {
@@ -130,9 +155,20 @@ export class PipPhysics {
     // Standing still on the ground: check there's still something under the feet.
     if (!this.onGround && this.vy === 0) {
       const probe = { ...this.box, y: this.y + 1 };
-      this.onGround = solids.some((s) => overlaps(probe, s));
+      this.onGround = solids.some((s) => overlaps(probe, s)) || (this.dropping <= 0 && this.onTopOf(oneWays));
     }
     if (this.onGround && !wasOnGround) this.sinceLanding = 0;
+  }
+
+  /** Are the feet exactly on top of one of these platforms? */
+  private onTopOf(platforms: readonly Box[]): boolean {
+    return platforms.some((o) => this.x < o.x + o.w && this.x + PIP.WIDTH > o.x && Math.abs(this.feetY - o.y) < 0.01);
+  }
+
+  /** On a one-way platform with no solid ground under the feet (so dropping through is allowed). */
+  private standingOnlyOnOneWay(solids: readonly Box[], oneWays: readonly Box[]): boolean {
+    const probe = { ...this.box, y: this.y + 1 };
+    return this.onTopOf(oneWays) && !solids.some((s) => overlaps(probe, s));
   }
 
   /** Which picture to show (drawing only). */

@@ -1,30 +1,39 @@
 import { expect, test } from '@playwright/test';
 
-test('the movement lab loads, Pip walks and jumps, and art can switch, with no console errors', async ({ page }) => {
+const line = (page: import('@playwright/test').Page, prefix: string) =>
+  page.evaluate((p) => ((window as any).__cc.lines as string[]).find((l) => l.startsWith(p)) ?? '', prefix);
+const num = async (page: import('@playwright/test').Page, prefix: string, i = 1) => Number((await line(page, prefix)).split(' ')[i]);
+
+test('the test level loads, Pip walks, jumps and the camera scrolls, with no console errors', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
   await page.goto('/');
-  await expect.poll(() => page.evaluate(() => (window as any).__cc.scene)).toBe('TEST ROOM');
-  const x = () => page.evaluate(() => Number((window as any).__cc.lines[0].split(' ')[1]));
-  const before = await x();
-  await page.keyboard.down('ArrowRight');
-  await page.waitForTimeout(500);
-  await page.keyboard.up('ArrowRight');
-  expect(await x()).toBeGreaterThan(before + 20);
-  // Jump: Pip leaves the ground and comes back down.
-  const y = () => page.evaluate(() => Number((window as any).__cc.lines[1].split(' ')[1]));
-  const ground = await y();
+  await expect.poll(() => page.evaluate(() => (window as any).__cc.scene)).toBe('LEVEL');
+
+  // Jump on the spot: Pip leaves the ground and comes back down.
+  const ground = await num(page, 'Y ');
   await page.keyboard.down('Space');
   await page.waitForTimeout(250);
-  expect(await y()).toBeLessThan(ground - 20);
+  expect(await num(page, 'Y ')).toBeLessThan(ground - 20);
   await page.keyboard.up('Space');
-  await expect.poll(y, { timeout: 3000 }).toBe(ground);
-  // External art with no files falls back to code without errors.
+  await expect.poll(() => num(page, 'Y '), { timeout: 3000 }).toBe(ground);
+
+  // Run right: Pip moves and the camera follows (and looks ahead).
+  const x0 = await num(page, 'X ');
+  await page.keyboard.down('ShiftLeft');
+  await page.keyboard.down('ArrowRight');
+  await page.waitForTimeout(1300);
+  await page.keyboard.up('ArrowRight');
+  await page.keyboard.up('ShiftLeft');
+  expect(await num(page, 'X ')).toBeGreaterThan(x0 + 60);
+  expect(await num(page, 'CAM ')).toBeGreaterThan(0);
+
+  // External art with no files falls back to code.
   await page.keyboard.press('KeyT');
-  await expect.poll(() => page.evaluate(() => (window as any).__cc.lines[2])).toBe('ART external');
-  expect(await page.evaluate(() => (window as any).__cc.lines[3])).toBe('HERO code');
+  await expect.poll(() => line(page, 'ART ')).toBe('ART external');
+  expect(await line(page, 'HERO ')).toBe('HERO code');
   expect(errors).toEqual([]);
 });

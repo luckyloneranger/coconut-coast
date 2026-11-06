@@ -39,15 +39,25 @@ export const PIP = {
   JUMP_CUT: 0.4, // letting go of Jump while rising keeps this share of upward speed (a tap is about 1 tile)
   COYOTE_TIME: 0.08, // s after running off an edge that a jump still works
   JUMP_BUFFER: 0.1, // s before landing that a jump press is remembered
+  DROP_THROUGH_TIME: 0.25, // s that one-way platforms let you fall through after Down + Jump
   LAND_SQUASH_TIME: 0.08, // s the landing squash shows
   STRIDE: 14, // px travelled per walk frame
 };
 
-/** Phase 1 movement lab. */
-export const LAB = {
-  FLOOR_Y: 230, // px, top of the floor
-  START_X: 40, // px, where Pip starts (and comes back after a fall)
-  FALL_LIMIT: 320, // px: below this, Pip has fallen in the gap and starts again
+/** The camera. Positions in px from the top-left of the screen. */
+export const CAMERA = {
+  DEAD_ZONE_W: 64, // px wide window in the middle where Pip moves without the camera following
+  LOOK_AHEAD: 80, // px the view slides ahead of Pip at full running speed
+  LOOK_AHEAD_RATE: 120, // px/s the look-ahead slides in or out
+  EASE: 8, // how quickly the camera catches up (higher = snappier); 8 is about 1/8 s
+  FEET_LINE: 0.72, // share of the screen height where Pip's feet sit on the ground
+  TOP_MARGIN: 0.18, // share of the screen above which the camera follows a jump up
+  BOTTOM_MARGIN: 0.88, // share of the screen below which the camera follows a fall straight away
+};
+
+/** Levels. */
+export const LEVEL = {
+  FALL_BELOW: 48, // px below the bottom of the level before a fall counts as lost
 };
 
 /** External sprites (see gfx/art). */

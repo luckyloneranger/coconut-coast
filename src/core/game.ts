@@ -6,7 +6,8 @@ import { Renderer } from './renderer';
 import { SceneManager } from './scene';
 import { loadSetting, saveSetting } from './settings';
 import { ArtLibrary, artSourceFrom } from '../gfx/art/library';
-import { TestRoomScene } from '../scenes/test-room';
+import { LevelScene } from '../scenes/level-scene';
+import { TEST_LEVEL } from '../world/levels/test-level';
 import { UI } from '../gfx/palette';
 
 /** Owns the loop, input, renderer, art and scenes. */
@@ -24,7 +25,7 @@ export class Game {
     attachKeyboard(this.input);
     this.art = new ArtLibrary(artSourceFrom(location.search, loadSetting('art')), externalFiles);
     void this.art.loadExternal(import.meta.env.BASE_URL);
-    this.scenes.push(new TestRoomScene(this.art, () => this.toggleArt()));
+    this.scenes.push(new LevelScene(TEST_LEVEL, this.art, () => this.toggleArt(), this.renderer.width, this.renderer.height));
   }
 
   /** Switch between code-drawn and external sprites, and remember the choice. */
