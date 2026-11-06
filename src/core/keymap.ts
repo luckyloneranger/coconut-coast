@@ -8,6 +8,7 @@ export type Action =
   | 'DOWN'
   | 'JUMP'
   | 'RUN'
+  | 'THROW'
   | 'PAUSE'
   | 'CONFIRM'
   | 'BACK'
@@ -23,7 +24,8 @@ export const DEFAULT_KEYMAP: KeyMap = {
   UP: ['ArrowUp', 'KeyW', 'PadUp'],
   DOWN: ['ArrowDown', 'KeyS', 'PadDown'],
   JUMP: ['Space', 'KeyZ', 'KeyW', 'ArrowUp', 'PadA'],
-  RUN: ['KeyX', 'ShiftLeft', 'ShiftRight', 'PadB', 'PadX'],
+  RUN: ['KeyX', 'ShiftLeft', 'ShiftRight', 'PadRB', 'PadRT'], // held: run (never throws)
+  THROW: ['KeyC', 'PadB', 'PadX'], // a tap: fire a seed pod (Sling Pip)
   PAUSE: ['Escape', 'KeyP', 'PadStart'],
   CONFIRM: ['Enter', 'Space', 'PadA', 'PadStart'],
   BACK: ['Escape', 'PadB'],

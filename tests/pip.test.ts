@@ -157,6 +157,52 @@ describe('forgiving timing', () => {
   });
 });
 
+describe('control polish', () => {
+  it('a head that clips a ceiling corner by a few px slides past it and keeps rising', () => {
+    // A block whose right edge sticks 3 px into Pip's left side, 1 tile above the head.
+    const block: Box = { x: -13, y: FLOOR_Y - PIP.HEIGHT - 20, w: 16, h: 16 };
+    const solids = [...FLOOR, block];
+    const p = standing(solids);
+    let top = p.y;
+    for (let i = 0; i < 60; i++) {
+      p.update(DT, { ...NO_CONTROLS, jumpPressed: i === 0, jumpHeld: true }, solids);
+      top = Math.min(top, p.y);
+    }
+    expect(top).toBeLessThan(block.y); // got past the block
+    expect(p.x).toBeGreaterThanOrEqual(3); // nudged right
+  });
+
+  it('a real bump (more than a corner) still stops the jump', () => {
+    const block: Box = { x: -8, y: FLOOR_Y - PIP.HEIGHT - 20, w: 16, h: 16 };
+    const solids = [...FLOOR, block];
+    const p = standing(solids);
+    let top = p.y;
+    for (let i = 0; i < 60; i++) {
+      p.update(DT, { ...NO_CONTROLS, jumpPressed: i === 0, jumpHeld: true }, solids);
+      top = Math.min(top, p.y);
+    }
+    expect(top).toBe(block.y + block.h);
+  });
+
+  it('braking in the air is as strong as on the ground', () => {
+    const p = standing();
+    run(p, 1, { right: true, run: true });
+    p.update(DT, { ...NO_CONTROLS, right: true, run: true, jumpPressed: true, jumpHeld: true }, FLOOR);
+    run(p, 0.25, { jumpHeld: true }); // let go of the direction in mid-air
+    expect(p.onGround).toBe(false);
+    expect(p.vx).toBe(0); // 180 px/s stopped within 0.25 s (it used to take about 0.35 s)
+  });
+
+  it('a stomp bounce right after leaving a ledge gives no extra jump', () => {
+    const p = standing();
+    p.update(DT, { ...NO_CONTROLS, right: true }, []); // step off into the air: coyote time starts
+    p.bounce(false);
+    p.update(DT, { ...NO_CONTROLS, jumpPressed: true, jumpHeld: true }, []);
+    expect(p.vy).toBeGreaterThan(-PIP.APEX_SPEED * 6); // still the small bounce, not a fresh full jump
+    expect(p.coyote).toBe(0);
+  });
+});
+
 describe('jumpSpeedFor', () => {
   it('gives a bit more than the smooth formula, to make up for the 60 steps a second', () => {
     const smooth = Math.sqrt(2 * PIP.GRAVITY * 64);

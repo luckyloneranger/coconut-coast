@@ -137,7 +137,7 @@ export class LevelScene implements Scene {
       return;
     }
     if (p.onGround) this.run.landed();
-    if (this.form.canThrow && input.justPressed('RUN') && canFire(this.pods)) {
+    if (this.form.canThrow && input.justPressed('THROW') && canFire(this.pods)) {
       this.pods.push(new SeedPod(p.feetX, p.y + p.h * 0.5, p.facingLeft));
     }
     this.updatePods(dt);

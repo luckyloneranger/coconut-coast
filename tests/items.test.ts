@@ -210,11 +210,11 @@ describe('seed pods', () => {
     expect(SEED.MAX_ON_SCREEN).toBe(2);
   });
 
-  it('Sling Pip fires with Run and defeats even the urchin', () => {
+  it('Sling Pip fires with Throw and defeats even the urchin', () => {
     const scene = new LevelScene({ name: 'u', rows: ['P....u....', '##########'] }, ART, () => {});
     scene.form.takeSlingshot();
     play(scene, 0.3);
-    play(scene, 1, [], ['RUN']);
+    play(scene, 1, [], ['THROW']);
     const urchin = scene.enemies[0];
     expect(urchin.active).toBe(false);
     expect(scene.deaths).toBe(0);
@@ -222,12 +222,13 @@ describe('seed pods', () => {
 });
 
 describe('throwing while running', () => {
-  it('holding Run and tapping it again with another key fires a pod', () => {
+  it('starting a run never throws; Throw while running does', () => {
     const scene = new LevelScene({ name: 't', rows: ['P' + '.'.repeat(30), '#'.repeat(31)] }, ART, () => {});
     scene.form.takeSlingshot();
     play(scene, 0.3);
-    play(scene, 0.2, ['RUN', 'RIGHT']);
-    scene.update(DT, input(['RUN', 'RIGHT'], ['RUN'])); // the X tap while Shift is held
+    play(scene, 0.2, ['RUN', 'RIGHT'], ['RUN']);
+    expect(scene.pods).toHaveLength(0);
+    scene.update(DT, input(['RUN', 'RIGHT'], ['THROW']));
     expect(scene.pods).toHaveLength(1);
   });
 });

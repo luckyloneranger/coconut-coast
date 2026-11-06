@@ -15,7 +15,8 @@ export const LOOP = {
 
 /** Gamepads. */
 export const GAMEPAD = {
-  STICK: 0.5, // how far (0-1) the left stick must be pushed to count as a d-pad press
+  STICK: 0.5, // how far (0-1) the left stick must be pushed sideways to count as left or right
+  STICK_VERTICAL: 0.75, // ...and up or down (only when pushed more up/down than sideways, so a tilted run isn't 'down')
 };
 
 /** Pip's movement. 16 px = 1 tile. Speeds in px/s, accelerations in px/s². */
@@ -30,7 +31,11 @@ export const PIP = {
   DECEL: 800, // slowing down with no direction held (walking speed to a stop in about 0.12 s)
   SKID_DECEL: 1600, // braking when pushing the other way
   SKID_MIN_SPEED: 60, // only skid (lean and dust) above this speed
-  AIR_CONTROL: 0.65, // share of ground acceleration you get in the air
+  AIR_CONTROL: 0.65, // share of ground acceleration (speeding up) you get in the air
+  AIR_BRAKE: 1.0, // share of ground braking (stopping, turning round) you get in the air
+  APEX_SPEED: 60, // px/s: rising slower than this with Jump held counts as the top of the jump...
+  APEX_GRAVITY_SCALE: 0.5, // ...where gravity is this much lighter (a little hang; heights stay exact)
+  CORNER_NUDGE: 4, // px: a head that clips a ceiling corner by this much slides past it
   GRAVITY: 800, // while rising: a full jump takes about 0.4 s to the top
   FALL_GRAVITY_SCALE: 1.6, // falling is heavier than rising, so jumps feel snappy
   MAX_FALL_SPEED: 400, // fall speed cap

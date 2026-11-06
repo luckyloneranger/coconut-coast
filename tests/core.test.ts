@@ -3,6 +3,7 @@ import { FixedStepClock } from '../src/core/loop';
 import { Input } from '../src/core/input';
 import { DEFAULT_KEYMAP } from '../src/core/keymap';
 import { computeScale } from '../src/core/renderer';
+import { heldCodes } from '../src/core/gamepad';
 import { DISPLAY } from '../src/game/tuning';
 
 describe('fixed-step clock', () => {
@@ -27,8 +28,23 @@ describe('input', () => {
     input.keyDown('PadA');
     input.beginStep();
     expect(input.justPressed('JUMP')).toBe(true);
+    input.keyDown('PadRB');
+    input.beginStep();
+    expect(input.isDown('RUN')).toBe(true);
     input.keyDown('PadB');
     input.beginStep();
+    expect(input.justPressed('THROW')).toBe(true);
+    expect(input.justPressed('RUN')).toBe(false); // starting a run never throws, and throwing never runs
+  });
+
+  it('on the keyboard, Run (Shift or X) and Throw (C) are separate', () => {
+    const input = new Input(DEFAULT_KEYMAP);
+    input.keyDown('ShiftLeft');
+    input.beginStep();
+    expect(input.justPressed('THROW')).toBe(false);
+    input.keyDown('KeyC');
+    input.beginStep();
+    expect(input.justPressed('THROW')).toBe(true);
     expect(input.isDown('RUN')).toBe(true);
   });
   it('a second key for an action still counts as a press while the first is held (hold Shift, tap X)', () => {
@@ -54,6 +70,19 @@ describe('input', () => {
     input.keyUp('KeyZ');
     input.beginStep();
     expect(input.justPressed('JUMP')).toBe(true);
+  });
+});
+
+describe('gamepad stick', () => {
+  const stick = (x: number, y: number) => heldCodes({ buttons: [], axes: [x, y] });
+  it('running with the stick tilted a little downward is not Down', () => {
+    const held = stick(0.87, 0.5); // right, about 30 degrees down
+    expect(held.has('PadRight')).toBe(true);
+    expect(held.has('PadDown')).toBe(false);
+  });
+  it('a firm push mostly downward is Down', () => {
+    expect(stick(0.2, 0.9).has('PadDown')).toBe(true);
+    expect(stick(0.6, 0.65).has('PadDown')).toBe(false); // diagonal, not firm enough
   });
 });
 

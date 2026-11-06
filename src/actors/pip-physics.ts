@@ -78,26 +78,27 @@ export class PipPhysics {
     if (this.onGround) this.stride += Math.abs(this.vx) * dt;
   }
 
-  /** Speed up, slow down or skid along the ground (less grip in the air). */
+  /** Speed up, slow down or skid along the ground. In the air, speeding up is weaker but braking isn't. */
   private steer(dt: number, c: PipControls): void {
     const dir = (c.right ? 1 : 0) - (c.left ? 1 : 0);
     const grip = this.onGround ? 1 : PIP.AIR_CONTROL;
+    const brake = this.onGround ? 1 : PIP.AIR_BRAKE;
     const top = c.run ? PIP.RUN_SPEED : PIP.WALK_SPEED;
     this.skidding = false;
     if (dir === 0) {
-      this.vx = approach(this.vx, 0, PIP.DECEL * grip * dt);
+      this.vx = approach(this.vx, 0, PIP.DECEL * brake * dt);
       return;
     }
     this.facingLeft = dir < 0;
     if (this.vx !== 0 && Math.sign(this.vx) !== dir) {
       // Pushing against your own speed: brake hard (a skid if fast, on the ground).
       this.skidding = this.onGround && Math.abs(this.vx) > PIP.SKID_MIN_SPEED;
-      this.vx = approach(this.vx, 0, PIP.SKID_DECEL * grip * dt);
+      this.vx = approach(this.vx, 0, PIP.SKID_DECEL * brake * dt);
       return;
     }
     const speed = Math.abs(this.vx);
     if (speed > top) {
-      this.vx = approach(this.vx, dir * top, PIP.DECEL * grip * dt); // let go of Run: ease back to walking
+      this.vx = approach(this.vx, dir * top, PIP.DECEL * brake * dt); // let go of Run: ease back to walking
     } else {
       const accel = speed < PIP.WALK_SPEED ? PIP.ACCEL : PIP.RUN_ACCEL;
       this.vx = approach(this.vx, dir * top, accel * grip * dt);
@@ -134,8 +135,7 @@ export class PipPhysics {
       this.rising = false;
     }
     if (this.onGround) return;
-    const g = this.vy < 0 ? PIP.GRAVITY : PIP.GRAVITY * PIP.FALL_GRAVITY_SCALE;
-    this.vy = Math.min(this.vy + g * dt, PIP.MAX_FALL_SPEED);
+    this.vy = Math.min(this.vy + gravityFor(this.vy, this.rising) * dt, PIP.MAX_FALL_SPEED);
   }
 
   private moveX(dt: number, solids: readonly Box[]): void {
@@ -169,7 +169,13 @@ export class PipPhysics {
         if (!wasOnGround) this.landedOn = { box: s, speed: this.vy };
         this.onGround = true;
       } else {
-        this.y = s.y + s.h; // bumped a ceiling
+        // Bumped a ceiling. If only a corner of the head clipped it, slide past instead.
+        const nudge = this.cornerNudge(s, solids);
+        if (nudge !== 0) {
+          this.x += nudge;
+          continue;
+        }
+        this.y = s.y + s.h;
         this.rising = false;
         this.bumped.push(s);
       }
@@ -181,6 +187,18 @@ export class PipPhysics {
       this.onGround = solids.some((s) => overlaps(probe, s)) || (this.dropping <= 0 && this.onTopOf(oneWays));
     }
     if (this.onGround && !wasOnGround) this.sinceLanding = 0;
+  }
+
+  /** How far to slide sideways to clear a ceiling block clipped by at most CORNER_NUDGE px (0 = it's a real bump). */
+  private cornerNudge(s: Box, solids: readonly Box[]): number {
+    const overlapLeft = s.x + s.w - this.x; // block sticks into Pip's left side by this much
+    const overlapRight = this.x + PIP.WIDTH - s.x; // ...or into the right side
+    let shift = 0;
+    if (overlapLeft > 0 && overlapLeft <= PIP.CORNER_NUDGE) shift = overlapLeft;
+    else if (overlapRight > 0 && overlapRight <= PIP.CORNER_NUDGE) shift = -overlapRight;
+    if (shift === 0) return 0;
+    const moved = { ...this.box, x: this.x + shift };
+    return solids.some((o) => overlaps(moved, o)) ? 0 : shift;
   }
 
   /** Are the feet exactly on top of one of these platforms? */
@@ -199,6 +217,8 @@ export class PipPhysics {
     this.vy = -(jumpHeld ? STOMP_BOUNCE_HELD_SPEED : STOMP_BOUNCE_SPEED);
     this.onGround = false;
     this.rising = jumpHeld; // letting go during a held bounce cuts it short, like a jump
+    this.coyote = 0; // no late jump off a bounce (it was a second jump)
+    this.buffer = 0;
   }
 
   /** Which picture to show (drawing only). */
@@ -217,14 +237,19 @@ export class PipPhysics {
  * for the game's fixed 60 steps a second. The smooth formula (v² = 2gh)
  * comes up about 4% short with steps, so this counts the steps instead.
  */
-export function jumpSpeedFor(height: number, gravity = PIP.GRAVITY, dt = 1 / LOOP.STEPS_PER_SECOND): number {
+export function jumpSpeedFor(height: number, held = true, dt = 1 / LOOP.STEPS_PER_SECOND): number {
+  // Step it exactly like update(): gravity (with the hang near the top when held), then move.
   const rise = (v: number) => {
     let h = 0;
-    for (let vy = v - gravity * dt; vy > 0; vy -= gravity * dt) h += vy * dt; // same order as update(): gravity, then move
-    return h;
+    let vy = -v;
+    for (;;) {
+      vy += gravityFor(vy, held) * dt;
+      if (vy >= 0) return h;
+      h -= vy * dt;
+    }
   };
   let lo = 0;
-  let hi = Math.sqrt(2 * gravity * height) * 2;
+  let hi = Math.sqrt(2 * PIP.GRAVITY * height) * 2;
   for (let i = 0; i < 40; i++) {
     const mid = (lo + hi) / 2;
     if (rise(mid) < height) lo = mid;
@@ -233,8 +258,18 @@ export function jumpSpeedFor(height: number, gravity = PIP.GRAVITY, dt = 1 / LOO
   return hi;
 }
 
+/**
+ * Gravity at vertical speed `vy` (down is positive): heavier falling; lighter
+ * for a moment at the top of a jump while Jump is still held (a little hang).
+ */
+function gravityFor(vy: number, risingHeld: boolean): number {
+  if (vy >= 0) return PIP.GRAVITY * PIP.FALL_GRAVITY_SCALE;
+  if (risingHeld && -vy < PIP.APEX_SPEED) return PIP.GRAVITY * PIP.APEX_GRAVITY_SCALE;
+  return PIP.GRAVITY;
+}
+
 const WALK_JUMP_SPEED = jumpSpeedFor(PIP.JUMP_HEIGHT);
-const STOMP_BOUNCE_SPEED = jumpSpeedFor(COMBAT.STOMP_BOUNCE);
+const STOMP_BOUNCE_SPEED = jumpSpeedFor(COMBAT.STOMP_BOUNCE, false);
 const STOMP_BOUNCE_HELD_SPEED = jumpSpeedFor(COMBAT.STOMP_BOUNCE_HELD);
 const RUN_JUMP_SPEED = jumpSpeedFor(PIP.RUN_JUMP_HEIGHT);
 

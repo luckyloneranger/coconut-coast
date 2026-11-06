@@ -51,10 +51,13 @@ It belongs to the same family as the console platformers of the late 1980s and e
 | Action | Keyboard | Gamepad | Touch (landscape) |
 | --- | --- | --- | --- |
 | Move | ← → or A D | D-pad or left stick | Left and right pads (left thumb) |
-| Duck / enter pipe-style doors | ↓ or S | Down | Down pad |
-| Jump (hold for higher) | Space, Z or W/↑ | A | JUMP button (right thumb) |
-| Run (hold) / throw | X or Shift | B or X | RUN button; throw is a tap |
+| Duck / enter pipe-style doors | ↓ or S | Down (a firm, mostly downward push on the stick) | Down pad |
+| Jump (hold for higher) | Space, Z, W or ↑ | A | JUMP button (right thumb) |
+| Run (hold) | Shift or X | RB or RT | RUN button |
+| Throw a seed pod (Sling Pip) | C | B or X | THROW button |
 | Pause | Esc or P | Start | Pause icon |
+
+Changed after a controls review in Phase 4: Run and Throw used to share a button, so starting a run as Sling Pip wasted a pod. Throw now has its own button, and Run never throws. On a pad, Run moved to the shoulder buttons, so it can be held while the thumb presses A or B.
 
 Menus use the arrows, Enter or Space to confirm and Esc to go back (pad: A and B; touch: on-screen arrows, OK and BACK).
 
@@ -66,7 +69,9 @@ All values are starting points in `tuning.ts`, in pixels and seconds at 60 steps
 - **Variable jump:** a press gives a strong upward push. Letting go early cuts the rise short, so a tap is a hop and a hold reaches about 4 tiles high (5 when running).
 - **Coyote time:** you can still jump for about 0.08 s after running off a ledge.
 - **Jump buffer:** a jump pressed up to about 0.1 s before landing still happens on landing.
-- **Air control:** you can steer in the air, a little less than on the ground.
+- **Air control:** you can steer in the air. Speeding up is weaker than on the ground (65%), but braking and turning round are just as strong, so a misjudged jump can be corrected (decided after the controls review).
+- **Jump peak:** with Jump held, gravity is half as strong for the last moment before the top (rising slower than 60 px/s), for a little hang. Jump heights stay exactly 4 and 5 tiles.
+- **Corner nudge:** a head that clips the corner of a block above by 4 px or less slides past it instead of stopping the jump.
 - **Fall speed** is capped so long drops stay readable.
 - **Stomp:** landing on most enemies from above defeats them and bounces Pip up; holding Jump makes the bounce higher.
 - **Collision** is tile-based with axis-separated movement (move X then resolve, then Y then resolve). One-way platforms can be jumped through from below.

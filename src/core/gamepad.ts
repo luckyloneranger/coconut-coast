@@ -40,8 +40,11 @@ export function heldCodes(pad: PadLike, second = false): Set<string> {
   const [x = 0, y = 0] = pad.axes;
   if (x < -GAMEPAD.STICK) add('PadLeft');
   if (x > GAMEPAD.STICK) add('PadRight');
-  if (y < -GAMEPAD.STICK) add('PadUp');
-  if (y > GAMEPAD.STICK) add('PadDown');
+  // Up and down need a firm, mostly vertical push: running with the stick tilted
+  // a little downward must not count as Down (Down + Jump drops through platforms).
+  const vertical = Math.abs(y) > Math.abs(x);
+  if (vertical && y < -GAMEPAD.STICK_VERTICAL) add('PadUp');
+  if (vertical && y > GAMEPAD.STICK_VERTICAL) add('PadDown');
   return held;
 }
 

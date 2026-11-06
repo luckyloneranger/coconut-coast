@@ -140,6 +140,15 @@
 
 **Fix after play-testing:** holding Shift to run and tapping X to throw did nothing, because both keys are Run and the second press wasn't counted while Shift was held. Now every new key press counts, even when another key for the same action is already down.
 
+**Controls review** (after "there is some clunkiness"):
+- **Throw has its own button:** C, or B/X on a pad. Starting a run used to fire a pod. Run is Shift/X, or RB/RT on a pad, and never throws.
+- **Pad stick:** Down needs a firm, mostly downward push (`GAMEPAD.STICK_VERTICAL`), so a slightly tilted run no longer turns Jump into a drop-through.
+- **Corner nudge:** a head clipping a ceiling corner by 4 px or less slides past it.
+- **Bounce bug fixed:** a stomp bounce right after leaving a ledge no longer allows a second jump.
+- **Air control:** braking and turning in the air are as strong as on the ground (`AIR_BRAKE` 1.0); speeding up stays at 65%.
+- **Jump peak:** half gravity near the top while Jump is held (`APEX_SPEED` 60 px/s, `APEX_GRAVITY_SCALE` 0.5). The heights stay exact, because `jumpSpeedFor` steps the same rule.
+- 7 new tests: separate Run and Throw on keyboard and pad, the stick tilt, both kinds of corner, air braking, and the bounce bug.
+
 **Found while building:** seed pods launched from Big Pip's chest flew over low enemies like the urchin, and only came down near the end of their flight. Now they skip along the ground twice (`SEED.BOUNCES`, `SEED.BOUNCE_KEEP`).
 
 **Tuning most likely to need a change:**
