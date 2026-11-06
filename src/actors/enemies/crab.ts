@@ -40,7 +40,7 @@ export class Crab extends Enemy {
     // Walk; turn at a wall ahead, or at a ledge (no floor under the front edge).
     const nextX = this.x + dir * CRAB.SPEED * dt;
     const frontCol = Math.floor((dir < 0 ? nextX : nextX + this.w) / TILE);
-    const wall = level.tileAt(frontCol, feet / TILE - 1) === 'ground';
+    const wall = level.isSolid(frontCol, feet / TILE - 1);
     const ledge = !level.isFloor(frontCol, feet / TILE);
     if (wall || ledge) this.facingLeft = !this.facingLeft;
     else this.x = nextX;

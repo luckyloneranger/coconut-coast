@@ -26,7 +26,13 @@ export class Game {
     this.art = new ArtLibrary(artSourceFrom(location.search, loadSetting('art')), externalFiles);
     void this.art.loadExternal(import.meta.env.BASE_URL);
     this.scenes.push(
-      new LevelScene(TEST_LEVEL, this.art, () => this.toggleArt(), this.renderer.width, this.renderer.height, () => this.debug.visible),
+      new LevelScene(TEST_LEVEL, this.art, () => this.toggleArt(), {
+        viewW: this.renderer.width,
+        viewH: this.renderer.height,
+        debugOpen: () => this.debug.visible,
+        // Relaxed mode (no Sun Meter) until the Options screen exists: ?relaxed=1
+        relaxed: new URLSearchParams(location.search).get('relaxed') === '1',
+      }),
     );
   }
 

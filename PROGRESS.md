@@ -113,3 +113,37 @@
 - `CRAB.SPEED`.
 
 **Next:** Phase 4, items and forms (fruit, crates, Mango, Slingshot, Starfruit, Sun Meter, lives, HUD).
+
+## Phase 4 – Items and forms
+
+**Done**
+- **Items:**
+  - Fruit (`*`), drawn as bananas, berries and pineapples in turn; all score the same.
+  - Sun Coins (`$`), three per level.
+  - Crates holding a Mango (`M`), a Slingshot (`S`), a Starfruit (`T`) or a burst of 5 fruit (`B`). Hit one from below, or land on it hard as Big Pip; the item pops out on top and the crate turns empty.
+  - Cracked stone (`%`): small Pip bumps it, and Big Pip breaks it.
+- **Forms:**
+  - Small; Big (Mango, 36 px tall); Sling (Slingshot, Big as well).
+  - Each hit goes back one step, with 1.5 s of blinking. Pip grows upwards, and waits if there's no room.
+  - **Seed pods:** tap Run as Sling Pip. They fly in an arc, skip off the ground twice, pop on walls, at most two at once, and defeat every enemy, even the urchin.
+  - **Starfruit:** 8 s when anything Pip touches is defeated; the glow slows when it's about to run out.
+- **Sun Meter:** a full meter lasts 45 s and each fruit refills an eighth. When it's empty, Pip loses a life; it blinks when low. `?relaxed=1` turns it off and keeps Pip's form after a lost life (until the Options screen in Phase 8).
+- **Lives and score:**
+  - 3 lives, and an extra life every 100 fruit.
+  - Fruit 10, coins 1000, and stomps 100/200/400/800 in a chain, then an extra life. Seed pod and Starfruit defeats are worth 100.
+  - **Game over:** a GAME OVER card, then the level starts again (until the world map in Phase 8).
+- **Display:** lives, score, fruit, three coin slots and the Sun Meter along the top. The level name shows for a moment at the start.
+- **Art:** an items sheet (8 icons of 16 × 16, `items.png`) and a tall stand-in for Big Pip (24 × 40, `pip-big.png`), both drop-in compatible with `ART_PROMPTS.md`. The Sling form shows a green band.
+- **Test level:** fruit trails, all four crates, a cracked-stone pocket hiding a Sun Coin over the plateau (the floating block moved up a tile so Big Pip fits under it), and coins over the high route and on the low ceiling.
+- **Code:** the level scene was split into rules (`level-scene.ts`) and drawing (`level-draw.ts`) to keep files small.
+- **Tests:** 74 unit tests (24 new: fruit, coins, extra lives, the stomp chain, the Sun Meter and Relaxed mode, forms and blinking, Starfruit, crates and fruit bursts, cracked stone, seed pod arcs, bounces, walls and the two-at-once limit, pods beating the urchin, Starfruit and Big hits in play, game over, Sun running out, and the test level's contents and Big-sized gaps). The browser test now checks fruit, score and lives.
+
+**Found while building:** seed pods launched from Big Pip's chest flew over low enemies like the urchin, and only came down near the end of their flight. Now they skip along the ground twice (`SEED.BOUNCES`, `SEED.BOUNCE_KEEP`).
+
+**Tuning most likely to need a change:**
+- `RUN.SUN_FULL_TIME` and `RUN.SUN_PER_FRUIT`: how much pressure the Sun Meter puts on.
+- `SEED.SPEED_X`, `SEED.SPEED_Y` and `SEED.BOUNCES`: the shot's range.
+- `FORMS.STARFRUIT_TIME`.
+- `ITEMS.BIG_STOMP_SPEED`: how hard Big Pip must land to open a crate.
+
+**Next:** Phase 5, art pass part 1 (palette system, sprite viewer, Pip's real animation set, Palm Beach tiles with auto-tiling).

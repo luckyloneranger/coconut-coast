@@ -3,7 +3,8 @@
 // same name. An external sheet must have the same frame size and count.
 
 import type { PixelMap } from './pixels';
-import { HERO_FRAMES } from './code/hero';
+import { HERO_BIG_FRAMES, HERO_FRAMES } from './code/hero';
+import { ITEM_ICONS } from './code/items';
 import { CRAB_FRAMES, GULL_FRAMES, URCHIN_FRAMES } from './code/enemies';
 
 export interface AssetSpec {
@@ -19,6 +20,8 @@ export interface AssetSpec {
 export const ASSETS = {
   // A stand-in box for Pip until the art pass. Frames in HERO_FRAME order.
   hero: { file: 'hero.png', frameW: 24, frameH: 32, frames: 6, code: HERO_FRAMES },
+  heroBig: { file: 'pip-big.png', frameW: 24, frameH: 40, frames: 6, code: HERO_BIG_FRAMES },
+  items: { file: 'items.png', frameW: 16, frameH: 16, frames: 8, code: ITEM_ICONS },
   crab: { file: 'enemy-crab.png', frameW: 24, frameH: 16, frames: 4, code: CRAB_FRAMES },
   urchin: { file: 'enemy-urchin.png', frameW: 16, frameH: 16, frames: 4, code: URCHIN_FRAMES },
   gull: { file: 'enemy-gull.png', frameW: 24, frameH: 20, frames: 4, code: GULL_FRAMES },

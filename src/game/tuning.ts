@@ -22,6 +22,7 @@ export const GAMEPAD = {
 export const PIP = {
   WIDTH: 16, // px, collision box (the sprite is 24 x 32 and drawn centred on it)
   HEIGHT: 28, // px
+  BIG_HEIGHT: 36, // px when Big (the sprite is 24 x 40)
   WALK_SPEED: 100, // top speed walking
   RUN_SPEED: 180, // top speed with Run held
   ACCEL: 600, // speeding up to walking speed (0 -> 100 in about 0.17 s)
@@ -70,6 +71,47 @@ export const COMBAT = {
   DEATH_GRAVITY: 700, // px/s² pulling Pip down during the death spin
   DEATH_TIME: 1.2, // s from the hit to coming back
   WAKE_MARGIN: 64, // px outside the screen at which enemies start moving
+};
+
+/** Lives, score and the Sun Meter. */
+export const RUN = {
+  START_LIVES: 3,
+  FRUIT_FOR_LIFE: 100, // an extra life every this many fruit
+  FRUIT_POINTS: 10,
+  COIN_POINTS: 1000,
+  STOMP_CHAIN: [100, 200, 400, 800], // points for each stomp in a row without landing; the next is an extra life
+  SUN_FULL_TIME: 45, // s a full Sun Meter lasts
+  SUN_PER_FRUIT: 0.125, // share of the meter each fruit refills
+  SUN_LOW: 0.25, // below this share the meter blinks as a warning
+};
+
+/** Pip's forms and power-ups. */
+export const FORMS = {
+  HURT_BLINK: 1.5, // s of blinking (can't be hurt) after a hit shrinks Pip
+  STARFRUIT_TIME: 8, // s of invincibility from a Starfruit
+  STARFRUIT_ENDING: 2, // s before it runs out that the flashing slows (a warning)
+};
+
+/** Crates and items. */
+export const ITEMS = {
+  POP_SPEED: 160, // px/s an item jumps up out of a crate
+  POP_GRAVITY: 600, // px/s² pulling it back onto the crate top
+  BURST_FRUIT: 5, // fruit from a fruit-burst crate
+  BURST_SPREAD: 70, // px/s sideways spread of burst fruit
+  PICKUP_REACH: 4, // px of extra reach when collecting (feels fair)
+  BIG_STOMP_SPEED: 150, // px/s: Big Pip landing this fast on a crate opens it
+};
+
+/** Seed pods from the Slingshot. */
+export const SEED = {
+  SPEED_X: 220, // px/s forward
+  SPEED_Y: -120, // px/s up at launch (an arc)
+  GRAVITY: 700, // px/s²
+  BOUNCES: 2, // times a pod skips off the ground before popping (so it can hit low enemies)
+  BOUNCE_KEEP: 0.7, // share of its downward speed it bounces back up with
+  MAX_ON_SCREEN: 2,
+  SIZE: 6, // px, collision box
+  LIFE: 1.6, // s before a pod disappears if it hits nothing
 };
 
 /** Enemies. */

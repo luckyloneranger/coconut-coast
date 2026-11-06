@@ -33,11 +33,14 @@ test('the test level loads, Pip jumps, the camera scrolls and a crab hit counts,
   expect(await num(page, 'X ')).toBeGreaterThan(x0 + 60);
   expect(await num(page, 'CAM ')).toBeGreaterThan(0);
   expect(await num(page, 'DEATHS ')).toBe(0);
+  expect(await num(page, 'FRUIT ')).toBeGreaterThan(0); // ran through the fruit trail at the start
+  expect(await num(page, 'SCORE ')).toBeGreaterThan(0);
 
-  // Not invincible any more: walking into the next crab costs a life.
+  // Not invincible any more: walking into the next crab costs a life (small Pip).
   await page.keyboard.press('KeyI');
   await page.keyboard.down('ArrowRight');
   await expect.poll(() => num(page, 'DEATHS '), { timeout: 8000 }).toBe(1);
+  expect(await num(page, 'LIVES ')).toBe(2);
   await page.keyboard.up('ArrowRight');
 
   // External art with no files falls back to code.

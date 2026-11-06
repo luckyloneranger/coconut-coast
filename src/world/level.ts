@@ -2,7 +2,7 @@
 // a clear message instead of a broken level.
 
 import type { Box } from '../actors/solids';
-import { ENEMY_MARKERS, LEGEND, TILE, type EnemyKind, type TileKind } from './tiles';
+import { ENEMY_MARKERS, LEGEND, SOLID_TILES, TILE, type CrateItem, type EnemyKind, type TileKind } from './tiles';
 
 /** A spot in the level, in px: feet position (bottom centre of a tile). */
 export interface Spot {
@@ -28,6 +28,11 @@ export class Level {
   readonly checkpoints: Spot[] = [];
   /** Where each enemy starts. */
   readonly enemies: (Spot & { kind: EnemyKind })[] = [];
+  /** Fruit and Sun Coin spots (the centre of their tile, px). */
+  readonly fruit: Spot[] = [];
+  readonly coins: Spot[] = [];
+  /** What each unopened crate holds, by tile index. */
+  private readonly crates = new Map<number, CrateItem>();
 
   constructor(src: LevelSource) {
     const problems = checkLevel(src);
@@ -46,6 +51,9 @@ export class Level {
         if (entry.marker === 'start') start = foot;
         if (entry.marker === 'flag') flag = foot;
         if (entry.marker === 'checkpoint') this.checkpoints.push(foot);
+        if (entry.marker === 'fruit') this.fruit.push({ x: foot.x, y: foot.y - TILE / 2 });
+        if (entry.marker === 'coin') this.coins.push({ x: foot.x, y: foot.y - TILE / 2 });
+        if (entry.crate) this.crates.set(ty * this.cols + tx, entry.crate);
         if (entry.marker && (ENEMY_MARKERS as readonly string[]).includes(entry.marker)) this.enemies.push({ ...foot, kind: entry.marker as EnemyKind });
       }
     });
@@ -54,10 +62,30 @@ export class Level {
     this.checkpoints.sort((a, b) => a.x - b.x);
   }
 
-  /** Is this tile something you stand on (ground or a one-way top)? */
+  /** Is this tile solid (ground, a crate, cracked stone)? */
+  isSolid(tx: number, ty: number): boolean {
+    return SOLID_TILES.has(this.tileAt(tx, ty));
+  }
+
+  /** Is this tile something you stand on (solid or a one-way top)? */
   isFloor(tx: number, ty: number): boolean {
-    const t = this.tileAt(tx, ty);
-    return t === 'ground' || t === 'oneway';
+    return this.isSolid(tx, ty) || this.tileAt(tx, ty) === 'oneway';
+  }
+
+  /** Change a tile (a crate opening, cracked stone breaking). */
+  setTile(tx: number, ty: number, kind: TileKind): void {
+    if (tx < 0 || tx >= this.cols || ty < 0 || ty >= this.rowsCount) return;
+    this.grid[ty * this.cols + tx] = kind;
+  }
+
+  /** Open a crate: it becomes an empty crate, and its item is returned (once). */
+  openCrate(tx: number, ty: number): CrateItem | null {
+    const i = ty * this.cols + tx;
+    const item = this.crates.get(i);
+    if (this.tileAt(tx, ty) !== 'crate' || !item) return null;
+    this.crates.delete(i);
+    this.setTile(tx, ty, 'used');
+    return item;
   }
 
   /** Spike tiles near an area, as their sharp part (the lower 10 px, slightly narrower). */
@@ -100,7 +128,7 @@ export class Level {
     for (let ty = ty0; ty <= ty1; ty++) {
       for (let tx = tx0; tx <= tx1; tx++) {
         const t = this.tileAt(tx, ty);
-        if (t === 'ground') solids.push({ x: tx * TILE, y: ty * TILE, w: TILE, h: TILE });
+        if (SOLID_TILES.has(t)) solids.push({ x: tx * TILE, y: ty * TILE, w: TILE, h: TILE });
         else if (t === 'oneway') oneWays.push({ x: tx * TILE, y: ty * TILE, w: TILE, h: TILE });
       }
     }

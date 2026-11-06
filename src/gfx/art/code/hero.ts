@@ -13,7 +13,6 @@ const PALETTE = {
 };
 
 const W = 24;
-const H = 32;
 const FEET_ROWS = 2; // the feet are the bottom two rows
 
 interface BoxShape {
@@ -23,8 +22,8 @@ interface BoxShape {
   feetApart: boolean;
 }
 
-/** Draw the box creature into a 24 x 32 map, standing on the bottom edge. */
-export function boxFrame(shape: BoxShape): PixelMap {
+/** Draw the box creature into a 24 x H map (32 small, 40 Big), standing on the bottom edge. */
+export function boxFrame(shape: BoxShape, H = 32): PixelMap {
   const grid = Array.from({ length: H }, () => Array<string>(W).fill('.'));
   const bottom = H - FEET_ROWS - 1; // the body's bottom outline row
   const top = bottom - shape.bodyH + 1;
@@ -67,6 +66,16 @@ export function boxFrame(shape: BoxShape): PixelMap {
   for (let y = H - FEET_ROWS; y < H; y++) for (const fx of feet) for (let x = fx; x < fx + 3; x++) set(x, y, 'o');
   return { rows: grid.map((r) => r.join('')), palette: PALETTE };
 }
+
+/** Big Pip's stand-in: the same six poses, 8 px taller (24 x 40). */
+export const HERO_BIG_FRAMES: readonly PixelMap[] = [
+  boxFrame({ bodyW: 20, bodyH: 36, lean: 0, feetApart: false }, 40),
+  boxFrame({ bodyW: 20, bodyH: 35, lean: 0, feetApart: true }, 40),
+  boxFrame({ bodyW: 16, bodyH: 38, lean: 0, feetApart: false }, 40),
+  boxFrame({ bodyW: 20, bodyH: 35, lean: 0, feetApart: true }, 40),
+  boxFrame({ bodyW: 20, bodyH: 35, lean: -3, feetApart: true }, 40),
+  boxFrame({ bodyW: 24, bodyH: 29, lean: 0, feetApart: true }, 40),
+];
 
 /** Frame order matches HERO_FRAME in assets.ts. */
 export const HERO_FRAMES: readonly PixelMap[] = [

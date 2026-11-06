@@ -33,8 +33,27 @@ export class PipPhysics {
     this.y = y;
   }
 
+  /** px, the collision box height: PIP.HEIGHT small, PIP.BIG_HEIGHT when Big. */
+  h: number = PIP.HEIGHT;
+  /** Solid boxes Pip's head hit from below this step (crates, cracked stone). */
+  bumped: Box[] = [];
+  /** The solid box Pip landed on this step, and how fast Pip was falling (px/s). */
+  landedOn: { box: Box; speed: number } | null = null;
+
   get box(): Box {
-    return { x: this.x, y: this.y, w: PIP.WIDTH, h: PIP.HEIGHT };
+    return { x: this.x, y: this.y, w: PIP.WIDTH, h: this.h };
+  }
+
+  /**
+   * Change height (grow or shrink) keeping the feet where they are. Growing
+   * waits if there's no room above; returns whether the change happened.
+   */
+  setHeight(h: number, solids: readonly Box[]): boolean {
+    const grown = { x: this.x, y: this.feetY - h, w: PIP.WIDTH, h };
+    if (h > this.h && solids.some((s) => overlaps(grown, s))) return false;
+    this.y = grown.y;
+    this.h = h;
+    return true;
   }
 
   /** Feet position (bottom centre), handy for drawing. */
@@ -42,12 +61,14 @@ export class PipPhysics {
     return this.x + PIP.WIDTH / 2;
   }
   get feetY(): number {
-    return this.y + PIP.HEIGHT;
+    return this.y + this.h;
   }
 
   /** `oneWays`: platforms you can jump up through and land on (only their top counts). */
   update(dt: number, c: PipControls, solids: readonly Box[], oneWays: readonly Box[] = []): void {
     this.dropping = Math.max(0, this.dropping - dt);
+    this.bumped = [];
+    this.landedOn = null;
     this.steer(dt, c);
     this.jump(dt, c, solids, oneWays);
     this.fall(dt, c);
@@ -135,7 +156,7 @@ export class PipPhysics {
     if (this.vy >= 0 && this.dropping <= 0) {
       for (const o of oneWays) {
         if (this.x < o.x + o.w && this.x + PIP.WIDTH > o.x && feetBefore <= o.y && this.feetY > o.y) {
-          this.y = o.y - PIP.HEIGHT;
+          this.y = o.y - this.h;
           this.vy = 0;
           this.onGround = true;
         }
@@ -144,11 +165,13 @@ export class PipPhysics {
     for (const s of solids) {
       if (!overlaps(this.box, s)) continue;
       if (this.vy >= 0) {
-        this.y = s.y - PIP.HEIGHT;
+        this.y = s.y - this.h;
+        if (!wasOnGround) this.landedOn = { box: s, speed: this.vy };
         this.onGround = true;
       } else {
         this.y = s.y + s.h; // bumped a ceiling
         this.rising = false;
+        this.bumped.push(s);
       }
       this.vy = 0;
     }

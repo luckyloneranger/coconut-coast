@@ -1,5 +1,6 @@
-// Plays one level: Pip, the tiles, the camera, enemies, spikes, checkpoints
-// and the end flag. Lives, items and score join in Phase 4.
+// Plays one level: Pip and Pip's forms, tiles and crates, enemies, items,
+// seed pods, spikes, checkpoints, the Sun Meter, lives and the end flag.
+// Drawing lives in level-draw.ts.
 
 import type { InputSnapshot } from '../core/input';
 import type { Renderer } from '../core/renderer';
@@ -8,86 +9,147 @@ import { touchEnemy, touchesHazard } from '../actors/combat';
 import { readControls } from '../actors/controls';
 import type { Enemy } from '../actors/enemies/enemy';
 import { makeEnemy } from '../actors/enemies';
-import { PipPhysics, type PipPose } from '../actors/pip-physics';
-import { HERO_FRAME } from '../gfx/art/assets';
+import { Item, crateContents, placedItems } from '../actors/items';
+import { PipForm } from '../actors/pip-form';
+import { PipPhysics } from '../actors/pip-physics';
+import { SeedPod, canFire } from '../actors/seed-pod';
+import { overlaps } from '../actors/solids';
 import type { ArtLibrary } from '../gfx/art/library';
-import { COMBAT, LEVEL, PIP } from '../game/tuning';
-import { UI } from '../gfx/palette';
+import { RunState } from '../game/run-state';
+import { COMBAT, ITEMS, LEVEL, PIP, RUN } from '../game/tuning';
 import { Camera } from '../world/camera';
 import { Level, type LevelSource, type Spot } from '../world/level';
 import { TILE } from '../world/tiles';
+import { drawLevel } from './level-draw';
 
-const PLANK = '#a8683a';
-const PLANK_LIGHT = '#d8985a';
-const CORAL = '#f06a8a';
-const CORAL_LIGHT = '#ffb0c4';
 const FLAG_REACH = 12; // px: touching the flag pole this close counts
-const POLE_H = 3 * TILE; // px, checkpoint post height
+const GAME_OVER_TIME = 3; // s the GAME OVER card shows before the level starts again
+const NAME_TIME = 2.5; // s the level name shows at the start
+
+export interface LevelOptions {
+  viewW?: number; // px
+  viewH?: number;
+  /** Is the debug overlay open? (Unlocks the invincibility key.) */
+  debugOpen?: () => boolean;
+  /** No Sun Meter, and Pip keeps the form after losing a life. */
+  relaxed?: boolean;
+}
 
 export class LevelScene implements Scene {
   readonly name = 'LEVEL';
-  readonly level: Level;
-  readonly pip: PipPhysics;
-  readonly camera: Camera;
-  readonly enemies: Enemy[];
+  level!: Level;
+  readonly pip = new PipPhysics(0, 0);
+  readonly form = new PipForm();
+  run!: RunState;
+  camera!: Camera;
+  enemies: Enemy[] = [];
+  items: Item[] = [];
+  pods: SeedPod[] = [];
   /** Has Pip reached the end flag? */
   finished = false;
-  /** Times Pip has been hit or fallen (until lives exist in Phase 4). */
+  /** Lives lost so far (for the debug overlay and tests). */
   deaths = 0;
   /** Where Pip comes back: the start, then the last checkpoint passed. */
-  respawn: Spot;
+  respawn!: Spot;
   /** How many checkpoints are passed (they're in order, left to right). */
   checkpointsReached = 0;
   /** s left of the death spin (0 = alive). */
   dying = 0;
-  /** Debug: hits and spikes do nothing (I key with the overlay open). */
+  /** s left of the GAME OVER card (0 = not showing). */
+  gameOver = 0;
+  /** Debug: hits, spikes and the Sun Meter do nothing (I key with the overlay open). */
   invincible = false;
+  /** s since the level (re)started, for animation. */
+  time = 0;
+  private fruitLooks = 0;
+  private readonly viewW: number;
+  private readonly viewH: number;
+  private readonly debugOpen: () => boolean;
+  readonly relaxed: boolean;
 
   constructor(
-    src: LevelSource,
-    private readonly art: ArtLibrary,
+    private readonly src: LevelSource,
+    readonly art: ArtLibrary,
     private readonly onArtToggle: () => void,
-    viewW = 480,
-    viewH = 270,
-    private readonly debugOpen: () => boolean = () => false,
+    opts: LevelOptions = {},
   ) {
-    this.level = new Level(src);
+    this.viewW = opts.viewW ?? 480;
+    this.viewH = opts.viewH ?? 270;
+    this.debugOpen = opts.debugOpen ?? (() => false);
+    this.relaxed = opts.relaxed ?? false;
+    this.restartLevel();
+  }
+
+  /** Start (or, after GAME OVER, restart) the level from scratch. */
+  restartLevel(): void {
+    this.level = new Level(this.src);
+    this.run = new RunState(this.relaxed);
     this.respawn = this.level.start;
-    this.pip = new PipPhysics(0, 0);
+    this.checkpointsReached = 0;
+    this.finished = false;
+    this.dying = 0;
+    this.gameOver = 0;
+    this.time = 0;
     this.enemies = this.level.enemies.map((e) => makeEnemy(e.kind, e));
+    this.items = placedItems(this.level);
+    this.fruitLooks = this.items.length;
+    this.pods = [];
+    this.form.respawn(false);
+    this.pip.h = PIP.HEIGHT;
     this.placeAt(this.respawn);
-    this.camera = new Camera(viewW, viewH, this.level.widthPx, this.level.heightPx, this.pip);
+    this.camera = new Camera(this.viewW, this.viewH, this.level.widthPx, this.level.heightPx, this.pip);
   }
 
   private placeAt(spot: Spot): void {
     const p = this.pip;
     p.x = spot.x - PIP.WIDTH / 2;
-    p.y = spot.y - PIP.HEIGHT;
+    p.y = spot.y - p.h;
     p.vx = 0;
     p.vy = 0;
     p.onGround = false;
   }
 
   update(dt: number, input: InputSnapshot): void {
+    this.time += dt;
     if (input.justPressed('ART_TOGGLE')) this.onArtToggle();
     if (this.debugOpen() && input.justPressed('DEBUG_INVINCIBLE')) this.invincible = !this.invincible;
+    if (this.gameOver > 0) {
+      this.gameOver -= dt;
+      if (this.gameOver <= 0) this.restartLevel();
+      return;
+    }
     if (this.dying > 0) {
       this.updateDeath(dt);
       return;
     }
     const p = this.pip;
+    this.form.update(dt);
     const feetBefore = p.feetY;
     const controls = readControls(input);
-    const { solids, oneWays } = this.level.boxesNear(p.box);
-    p.update(dt, controls, solids, oneWays);
+    const near = this.level.boxesNear(p.box);
+    p.update(dt, controls, near.solids, near.oneWays);
+    // Grow or shrink to match the form (growing waits for room above).
+    const wantH = this.form.big ? PIP.BIG_HEIGHT : PIP.HEIGHT;
+    if (p.h !== wantH) p.setHeight(wantH, this.level.boxesNear(p.box).solids);
+    this.hitBlocks();
     if (p.y > this.level.heightPx + LEVEL.FALL_BELOW) {
-      this.comeBack(); // fell in a pit
+      this.die(); // fell in a pit
       return;
     }
+    if (p.onGround) this.run.landed();
+    if (this.form.canThrow && input.justPressed('RUN') && canFire(this.pods)) {
+      this.pods.push(new SeedPod(p.feetX, p.y + p.h * 0.5, p.facingLeft));
+    }
+    this.updatePods(dt);
     this.updateEnemies(dt, feetBefore, controls.jumpHeld);
     if (this.dying > 0) return;
     if (!this.invincible && touchesHazard(p.box, this.level.hazardsNear(p.box))) {
-      this.die();
+      this.die(); // spikes cost a life whatever the form
+      return;
+    }
+    this.updateItems(dt);
+    if (!this.invincible && !this.finished && this.run.drain(dt)) {
+      this.die(); // the Sun Meter ran out
       return;
     }
     this.passCheckpoints();
@@ -96,7 +158,45 @@ export class LevelScene implements Scene {
     this.camera.update(dt, p);
   }
 
-  /** Wake enemies near the screen, move them, then see if Pip stomps or gets hit. */
+  /** Crates and cracked stone react to a head-butt; Big Pip landing hard on a crate opens it too. */
+  private hitBlocks(): void {
+    const p = this.pip;
+    const hits = p.bumped.map((b) => ({ tx: b.x / TILE, ty: b.y / TILE }));
+    if (p.landedOn && this.form.big && p.landedOn.speed >= ITEMS.BIG_STOMP_SPEED) {
+      hits.push({ tx: p.landedOn.box.x / TILE, ty: p.landedOn.box.y / TILE });
+    }
+    for (const { tx, ty } of hits) {
+      const tile = this.level.tileAt(tx, ty);
+      if (tile === 'crate') {
+        const item = this.level.openCrate(tx, ty);
+        if (item) {
+          const out = crateContents(item, tx, ty, this.fruitLooks);
+          this.fruitLooks += out.length;
+          this.items.push(...out);
+        }
+      } else if (tile === 'cracked' && this.form.big && p.bumped.some((b) => b.x === tx * TILE && b.y === ty * TILE)) {
+        this.level.setTile(tx, ty, 'air');
+      }
+    }
+  }
+
+  private updatePods(dt: number): void {
+    for (const pod of this.pods) {
+      pod.update(dt, this.level);
+      if (pod.gone) continue;
+      for (const e of this.enemies) {
+        if (e.awake && e.active && overlaps(pod.box, e.box)) {
+          e.stomp(COMBAT.SQUASH_TIME); // a pod defeats every kind, even the urchin
+          this.run.score += RUN.STOMP_CHAIN[0];
+          pod.gone = true;
+          break;
+        }
+      }
+    }
+    this.pods = this.pods.filter((pod) => !pod.gone);
+  }
+
+  /** Wake enemies near the screen, move them, then stomps and hits. */
   private updateEnemies(dt: number, feetBefore: number, jumpHeld: boolean): void {
     const p = this.pip;
     const left = this.camera.x - COMBAT.WAKE_MARGIN;
@@ -109,16 +209,47 @@ export class LevelScene implements Scene {
     for (const e of this.enemies) {
       if (!e.awake || !e.active) continue;
       const touch = touchEnemy(p.box, p.vy, feetBefore, e.box, e.stompable);
-      if (touch === 'stomp' || (touch === 'hurt' && bounced)) {
+      if (touch === 'none') continue;
+      if (touch === 'stomp' || bounced) {
         // Landing on two at once counts for both.
         e.stomp(COMBAT.SQUASH_TIME);
+        this.run.stomped();
         bounced = true;
-      } else if (touch === 'hurt' && !this.invincible) {
+      } else if (this.form.star > 0) {
+        e.stomp(COMBAT.SQUASH_TIME); // Starfruit: anything touched is defeated
+        this.run.score += RUN.STOMP_CHAIN[0];
+      } else if (!this.invincible && this.form.hit() === 'dead') {
         this.die();
         return;
       }
     }
     if (bounced) p.bounce(jumpHeld);
+  }
+
+  private updateItems(dt: number): void {
+    for (const it of this.items) {
+      it.update(dt, this.level);
+      if (!it.touches(this.pip.box)) continue;
+      it.collected = true;
+      switch (it.kind) {
+        case 'fruit':
+          this.run.addFruit();
+          break;
+        case 'coin':
+          this.run.addCoin(it.index);
+          break;
+        case 'mango':
+          this.form.eatMango();
+          break;
+        case 'slingshot':
+          this.form.takeSlingshot();
+          break;
+        case 'starfruit':
+          this.form.eatStarfruit();
+          break;
+      }
+    }
+    this.items = this.items.filter((it) => !it.collected);
   }
 
   private passCheckpoints(): void {
@@ -129,7 +260,7 @@ export class LevelScene implements Scene {
     }
   }
 
-  /** Hit: Pip pops up and spins off the bottom of the screen, then comes back. */
+  /** Lose a life: Pip pops up and spins off the bottom of the screen first. */
   die(): void {
     this.dying = COMBAT.DEATH_TIME;
     this.pip.vx = 0;
@@ -145,127 +276,29 @@ export class LevelScene implements Scene {
     if (this.dying <= 0) this.comeBack();
   }
 
-  /** Back at the last checkpoint, with every enemy back in its place. */
+  /** Back at the last checkpoint with every enemy in its place, or GAME OVER. */
   private comeBack(): void {
     this.deaths++;
     this.dying = 0;
+    if (this.run.loseLife()) {
+      this.gameOver = GAME_OVER_TIME;
+      return;
+    }
+    this.form.respawn(this.relaxed);
+    this.pip.h = this.form.big ? PIP.BIG_HEIGHT : PIP.HEIGHT;
     this.placeAt(this.respawn);
     for (const e of this.enemies) e.reset();
+    this.pods = [];
     this.camera.snapTo(this.pip);
   }
 
+  /** Show the level name for a moment at the start. */
+  get showName(): boolean {
+    return this.time < NAME_TIME;
+  }
+
   render(r: Renderer): void {
-    const cx = Math.round(this.camera.x);
-    const cy = Math.round(this.camera.y);
-    // Sky: fixed bands for now (parallax backgrounds come with the art).
-    r.rect(0, 0, r.width, 90, UI.SKY_TOP);
-    r.rect(0, 90, r.width, 80, UI.SKY_MID);
-    r.rect(0, 170, r.width, r.height - 170, UI.SKY_LOW);
-    this.drawTiles(r, cx, cy);
-    this.drawStartMarks(r, cx, cy);
-    this.drawCheckpoints(r, cx, cy);
-    this.drawFlag(r, cx, cy);
-    this.drawEnemies(r, cx, cy);
-
-    const p = this.pip;
-    const sheet = this.art.sheet('hero');
-    const blink = this.invincible && Math.floor(performance.now() / 100) % 2 === 0;
-    if (!blink) {
-      const frame = this.dying > 0 ? HERO_FRAME.rise : this.frameFor(p.pose);
-      r.sprite(sheet, frame, p.feetX - sheet.frameW / 2 - cx, p.feetY - sheet.frameH - cy, p.facingLeft, this.dying > 0);
-    }
-
-    r.text(this.level.name, 8, 8, UI.WHITE);
-    r.text(`DEATHS ${this.deaths}`, r.width - 8, 8, UI.WHITE, 'right');
-    if (this.invincible) r.text('INVINCIBLE (DEBUG)', r.width - 8, 20, UI.YELLOW, 'right');
-    if (this.finished) r.text('END FLAG REACHED!', r.width / 2, 40, UI.YELLOW, 'center', 2);
-  }
-
-  private drawEnemies(r: Renderer, cx: number, cy: number): void {
-    for (const e of this.enemies) {
-      if (e.defeated) continue;
-      const sheet = this.art.sheet(e.kind);
-      const x = e.x + e.w / 2 - sheet.frameW / 2 - cx;
-      const y = e.y + e.h - sheet.frameH - cy;
-      if (x < -sheet.frameW || x > r.width) continue;
-      if (e.squash > 0) {
-        // Squashed flat: just the bottom few rows, then gone.
-        r.rect(x + 2, e.y + e.h - 4 - cy, sheet.frameW - 4, 4, UI.INK);
-        continue;
-      }
-      r.sprite(sheet, e.frame, x, y, !e.facingLeft);
-    }
-  }
-
-  /** Only the tiles on screen. Ground gets a grass edge where there's air above it. */
-  private drawTiles(r: Renderer, cx: number, cy: number): void {
-    const L = this.level;
-    const tx0 = Math.floor(cx / TILE);
-    const ty0 = Math.floor(cy / TILE);
-    for (let ty = ty0; ty <= ty0 + Math.ceil(r.height / TILE); ty++) {
-      for (let tx = tx0; tx <= tx0 + Math.ceil(r.width / TILE); tx++) {
-        if (tx < 0 || tx >= L.cols) continue;
-        const t = L.tileAt(tx, ty);
-        if (t === 'air') continue;
-        const x = tx * TILE - cx;
-        const y = ty * TILE - cy;
-        if (t === 'oneway') {
-          r.rect(x, y, TILE, 5, PLANK);
-          r.rect(x, y, TILE, 1, PLANK_LIGHT);
-          r.rect(x + 2, y + 5, 2, 3, PLANK); // little supports
-          r.rect(x + TILE - 4, y + 5, 2, 3, PLANK);
-          continue;
-        }
-        if (t === 'spikes') {
-          // Three coral points.
-          for (let i = 0; i < 3; i++) {
-            const px = x + 2 + i * 4;
-            for (let h = 0; h < 10; h++) r.rect(px + Math.floor(h / 3), y + TILE - 1 - h, Math.max(1, 4 - Math.floor((2 * h) / 3)), 1, h > 6 ? CORAL_LIGHT : CORAL);
-          }
-          continue;
-        }
-        r.rect(x, y, TILE, TILE, UI.SAND);
-        if (L.tileAt(tx, ty - 1) !== 'ground') {
-          r.rect(x, y, TILE, 4, UI.GRASS);
-          r.rect(x, y + 4, TILE, 2, UI.GRASS_DARK);
-        }
-      }
-    }
-  }
-
-  /** Height marks at 1 to 5 tiles above the start, to judge jumps. */
-  private drawStartMarks(r: Renderer, cx: number, cy: number): void {
-    const s = this.level.start;
-    for (let n = 1; n <= 5; n++) {
-      const y = s.y - n * TILE - cy;
-      r.rect(s.x - 40 - cx, y, 10, 1, UI.WHITE);
-      r.text(String(n), s.x - 28 - cx, y - 4, UI.WHITE);
-    }
-  }
-
-  /** A post with a flag: down until passed, then up. */
-  private drawCheckpoints(r: Renderer, cx: number, cy: number): void {
-    this.level.checkpoints.forEach((c, i) => {
-      const x = c.x - cx;
-      const y = c.y - cy;
-      const up = i < this.checkpointsReached;
-      r.rect(x, y - POLE_H, 2, POLE_H, UI.GREY);
-      r.rect(x + 2, up ? y - POLE_H : y - 12, 10, 7, up ? UI.GREEN : UI.WHITE);
-    });
-  }
-
-  private drawFlag(r: Renderer, cx: number, cy: number): void {
-    const f = this.level.flag;
-    if (!f) return;
-    const x = f.x - cx;
-    const y = f.y - cy;
-    r.rect(x, y - 4 * TILE, 2, 4 * TILE, UI.WHITE);
-    r.rect(x + 2, y - 4 * TILE, 14, 9, this.finished ? UI.GREEN : UI.YELLOW);
-  }
-
-  private frameFor(pose: PipPose): number {
-    if (pose === 'walk' || pose === 'run') return Math.floor(this.pip.stride / PIP.STRIDE) % 2 ? HERO_FRAME.step : HERO_FRAME.stand;
-    return HERO_FRAME[pose];
+    drawLevel(r, this);
   }
 
   debugLines(): string[] {
@@ -279,6 +312,11 @@ export class LevelScene implements Scene {
       `VX ${p.vx.toFixed(0)} VY ${p.vy.toFixed(0)}`,
       `POSE ${p.pose}${p.onGround ? ' GROUND' : ''}`,
       `DEATHS ${this.deaths}`,
+      `LIVES ${this.run.lives}`,
+      `SCORE ${this.run.score}`,
+      `FRUIT ${this.run.fruit}`,
+      `FORM ${this.form.form}${this.form.star > 0 ? ' STAR' : ''}`,
+      `SUN ${this.run.sun.toFixed(2)}`,
       `ENEMIES ${this.enemies.filter((e) => !e.defeated).length}/${this.enemies.length}`,
     ];
   }

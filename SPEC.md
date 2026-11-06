@@ -74,7 +74,7 @@ All values are starting points in `tuning.ts`, in pixels and seconds at 60 steps
 ### Health and lives
 
 - Small Pip dies from one hit. A **Mango** makes Pip **Big** (taller sprite, can break cracked stone blocks with a head-butt). A hit while Big shrinks Pip back to small with a short invincible blink.
-- The **Slingshot** lets Pip fire seed pods in an arc (two on screen at most) that defeat most enemies. A hit removes the Slingshot first.
+- The **Slingshot** lets Pip fire seed pods in an arc (two on screen at most) that defeat every enemy. The pods skip off the ground twice, so they can hit low enemies (decided in Phase 4). Picking up the Slingshot also makes small Pip Big, so the forms go small → Big → Sling, and each hit goes back one step (decided in Phase 4).
 - Falling into a pit or the sea, or touching lava or spikes, costs a life whatever your form.
 - 3 lives at the start; every 100 fruit gives an extra life. A **checkpoint flag** halfway through each level is where you restart. Losing every life sends you back to the world map with your progress kept but the level restarted.
 
@@ -276,6 +276,8 @@ Every decision has a default, so work can start straight away. Change any of the
 | Slopes | None in v1: flat ground and steps (decided in Phase 2) | Add slopes later if a world needs them |
 | Drop through one-way platforms | Down + Jump (decided in Phase 2) | — |
 | Enemies after a death | All come back to their starting places (decided in Phase 3) | Defeated enemies stay gone |
+| Sun Meter speed | A full meter lasts 45 s; each fruit refills an eighth (decided in Phase 4) | Any values in `RUN` in `tuning.ts` |
+| Game over before the world map exists | The level starts again with 3 lives (Phase 4, until Phase 8) | — |
 | Hero | Pip, a young island courier | Your own character idea |
 | Look and resolution | 16-bit style at 480 × 270 widescreen | 384 × 216 (a little chunkier, less art to draw), or 8-bit at 320 × 180 |
 | Art made in | **Decided:** drawn in code by default; external PNG sprites as an option, per asset (the user is trying an AI image generator with `ART_PROMPTS.md`) | Hand-drawn sheets from a pixel editor such as Aseprite |
