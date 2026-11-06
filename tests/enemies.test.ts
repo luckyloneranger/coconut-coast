@@ -51,7 +51,7 @@ describe('crab', () => {
 describe('gull', () => {
   const SKY = new Level({ name: 's', rows: ['....g.....', '..........', '..........', '..........', 'P.........', '##########'] });
 
-  it('glides, then swoops down toward Pip when close, and climbs back', () => {
+  it('glides, hovers as a warning when Pip is close, swoops down toward Pip, and climbs back', () => {
     const gull = new Gull(SKY.enemies[0]);
     gull.reset();
     const startY = gull.y;
@@ -59,6 +59,11 @@ describe('gull', () => {
     expect(gull.swooping).toBe(false);
     const pip = { x: gull.x + 40, y: 5 * TILE };
     stepEnemy(gull, SKY, DT, pip);
+    expect(gull.warning).toBeGreaterThan(0); // hovering first
+    expect(gull.swooping).toBe(false);
+    const hoverX = gull.x;
+    stepEnemy(gull, SKY, GULL.WARNING, pip);
+    expect(gull.x).toBe(hoverX); // stayed put while warning
     expect(gull.swooping).toBe(true);
     let lowest = gull.y;
     for (let t = 0; t < GULL.SWOOP_TIME; t += DT) {
@@ -69,6 +74,23 @@ describe('gull', () => {
     stepEnemy(gull, SKY, 0.1, pip);
     expect(gull.swooping).toBe(false); // cooling down before the next swoop
     expect(gull.y).toBeCloseTo(startY, 0);
+  });
+});
+
+describe('gull speed', () => {
+  it('never dives faster than about 300 px/s, even from high up', () => {
+    const tall = new Level({ name: 't', rows: ['g.........', ...Array(10).fill('..........'), 'P.........', '##########'] });
+    const gull = new Gull(tall.enemies[0]);
+    gull.reset();
+    const pip = { x: gull.x + GULL.TRIGGER - 10, y: 12 * TILE };
+    let fastest = 0;
+    let last = { x: gull.x, y: gull.y };
+    for (let t = 0; t < GULL.WARNING + GULL.SWOOP_TIME; t += DT) {
+      gull.update(DT, { level: tall, pipX: pip.x, pipY: pip.y });
+      fastest = Math.max(fastest, Math.hypot(gull.x - last.x, gull.y - last.y) / DT);
+      last = { x: gull.x, y: gull.y };
+    }
+    expect(fastest).toBeLessThan(320);
   });
 });
 
