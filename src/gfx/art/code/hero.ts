@@ -1,5 +1,5 @@
-// Phase 0 stand-in for Pip: a shaded box with a face, drawn in code.
-// Two frames: standing and a little bounce for moving.
+// Stand-in for Pip until the art pass: a shaded box with a face, drawn in code.
+// The frames are made by one function so squash, stretch and lean stay consistent.
 
 import type { PixelMap } from '../pixels';
 
@@ -12,45 +12,68 @@ const PALETTE = {
   k: '#2a1a2a', // pupil
 };
 
-const STAND = [
-  '........................',
-  '........................',
-  '...oooooooooooooooooo...',
-  '..ollllllllllllllllbbo..',
-  '..ollbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbwwwbbwwwbbbdo..',
-  '..olbbbbbwkwbbwkwbbbdo..',
-  '..olbbbbbwkwbbwkwbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbboooobbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..olbbbbbbbbbbbbbbbbdo..',
-  '..obbbbbbbbbbbbbbbbbdo..',
-  '..oddddddddddddddddddo..',
-  '...oooooooooooooooooo...',
-  '.....ooo........ooo.....',
-  '.....ooo........ooo.....',
-  '........................',
-];
+const W = 24;
+const H = 32;
+const FEET_ROWS = 2; // the feet are the bottom two rows
 
-/** The step frame: the body one pixel lower, feet apart. */
-const STEP = [STAND[0], ...STAND.slice(0, 29), '....ooo..........ooo....', '....ooo..........ooo....'];
+interface BoxShape {
+  bodyW: number; // px, including the outline
+  bodyH: number; // px, including the outline
+  lean: number; // px the top shifts sideways (negative = back)
+  feetApart: boolean;
+}
 
+/** Draw the box creature into a 24 x 32 map, standing on the bottom edge. */
+export function boxFrame(shape: BoxShape): PixelMap {
+  const grid = Array.from({ length: H }, () => Array<string>(W).fill('.'));
+  const bottom = H - FEET_ROWS - 1; // the body's bottom outline row
+  const top = bottom - shape.bodyH + 1;
+  const left0 = Math.floor((W - shape.bodyW) / 2);
+  const set = (x: number, y: number, ch: string) => {
+    if (x >= 0 && x < W && y >= 0 && y < H) grid[y][x] = ch;
+  };
+  for (let y = top; y <= bottom; y++) {
+    const shift = Math.round((shape.lean * (bottom - y)) / Math.max(1, shape.bodyH - 1));
+    const left = left0 + shift;
+    const right = left + shape.bodyW - 1;
+    for (let x = left; x <= right; x++) {
+      const edge = y === top || y === bottom || x === left || x === right;
+      const corner = (y === top || y === bottom) && (x === left || x === right);
+      if (corner) continue; // rounded corners
+      let ch = 'b';
+      if (edge) ch = 'o';
+      else if (y === top + 1 || x === left + 1) ch = 'l';
+      else if (y === bottom - 1 || x === right - 1) ch = 'd';
+      set(x, y, ch);
+    }
+    // Face: eyes a quarter of the way down, mouth below them.
+    const eyeY = top + Math.max(2, Math.floor(shape.bodyH / 4));
+    if (y === eyeY || y === eyeY + 1 || y === eyeY + 2) {
+      const mid = left + Math.floor(shape.bodyW / 2);
+      for (const ex of [mid - 4, mid + 1]) {
+        set(ex, y, 'w');
+        set(ex + 1, y, y === eyeY ? 'w' : 'k');
+        set(ex + 2, y, 'w');
+      }
+    }
+    if (y === eyeY + 5) {
+      const mid = left + Math.floor(shape.bodyW / 2);
+      for (let x = mid - 2; x < mid + 2; x++) set(x, y, 'o');
+    }
+  }
+  // Feet.
+  const mid = Math.floor(W / 2);
+  const feet = shape.feetApart ? [mid - 8, mid + 5] : [mid - 6, mid + 3];
+  for (let y = H - FEET_ROWS; y < H; y++) for (const fx of feet) for (let x = fx; x < fx + 3; x++) set(x, y, 'o');
+  return { rows: grid.map((r) => r.join('')), palette: PALETTE };
+}
+
+/** Frame order matches HERO_FRAME in assets.ts. */
 export const HERO_FRAMES: readonly PixelMap[] = [
-  { rows: STAND, palette: PALETTE },
-  { rows: STEP, palette: PALETTE },
+  boxFrame({ bodyW: 20, bodyH: 28, lean: 0, feetApart: false }), // stand
+  boxFrame({ bodyW: 20, bodyH: 27, lean: 0, feetApart: true }), // step
+  boxFrame({ bodyW: 16, bodyH: 30, lean: 0, feetApart: false }), // rise: stretched tall
+  boxFrame({ bodyW: 20, bodyH: 27, lean: 0, feetApart: true }), // fall
+  boxFrame({ bodyW: 20, bodyH: 27, lean: -3, feetApart: true }), // skid: leaning back
+  boxFrame({ bodyW: 24, bodyH: 22, lean: 0, feetApart: true }), // land: squashed wide
 ];

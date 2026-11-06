@@ -32,3 +32,24 @@
 - Art switching is on the T key until the Options screen exists (Phase 8).
 
 **Next:** Phase 1, movement and jumping.
+
+## Phase 1 – Movement and jumping
+
+**Done**
+- **Movement logic** (`src/actors/pip-physics.ts`), with no drawing:
+  - Walking (100 px/s) and running (180 px/s with Run held) with speed-up and slow-down.
+  - A skid when you push the other way at speed.
+  - Less control in the air.
+- **Jumping:** higher the longer you hold (a tap is about 1 tile, a hold 4, a hold at full run 5). Falling is heavier than rising, and Pip bumps into walls and ceilings.
+- **Forgiving timing:** a jump still works for 0.08 s after leaving an edge, and a press up to 0.1 s before landing is remembered.
+- **Movement lab:** a floor with a 4-tile gap (fall in and you start again), a 2-tile block, a ledge 3.5 tiles up, height marks, a dotted trail of the last jump, and its height in tiles.
+- **Stand-in sprite:** 6 frames (stand, step, rise stretched, fall, skid leaning, land squashed). `hero.png` for external art is now 144 × 32.
+- **Tests:** 23 unit tests (11 new: speeds, skid, walls, tap and hold heights, run bonus, fall speed, ceilings, coyote time, jump buffer) and the browser test now also jumps.
+
+**Tuning most likely to need a change** (`PIP` in `tuning.ts`):
+- `JUMP_SPEED` and `GRAVITY`: jump height and how floaty it feels.
+- `FALL_GRAVITY_SCALE`: how quickly Pip comes down.
+- `DECEL`: how suddenly Pip stops.
+- `JUMP_CUT`: how small a tap-jump is.
+
+**Next:** Phase 2, tiles and camera.

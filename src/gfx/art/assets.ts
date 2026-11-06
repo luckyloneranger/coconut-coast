@@ -16,9 +16,12 @@ export interface AssetSpec {
 }
 
 export const ASSETS = {
-  // Phase 0: a stand-in box for Pip (the real Pip sprites come with the art pass).
-  hero: { file: 'hero.png', frameW: 24, frameH: 32, frames: 2, code: HERO_FRAMES },
+  // A stand-in box for Pip until the art pass. Frames in HERO_FRAME order.
+  hero: { file: 'hero.png', frameW: 24, frameH: 32, frames: 6, code: HERO_FRAMES },
 } satisfies Record<string, AssetSpec>;
+
+/** Where each picture sits in the hero sheet (left to right). */
+export const HERO_FRAME = { stand: 0, step: 1, rise: 2, fall: 3, skid: 4, land: 5 } as const;
 
 export type AssetId = keyof typeof ASSETS;
 export const ASSET_IDS = Object.keys(ASSETS) as AssetId[];

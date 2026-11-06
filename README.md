@@ -21,6 +21,6 @@ Open the address it prints (usually http://localhost:5173). `npm test` runs the 
 
 ## Art: drawn in code, or your own sprites
 
-Every sprite is drawn in code by default. To use your own art instead, put a PNG in `public/art/` named after the asset (for example `hero.png`), at the exact size listed in `src/gfx/art/assets.ts`, then press **T** in the game (or open the game with `?art=external`). Any asset without a fitting file keeps its code-drawn version. Pure magenta (#FF00FF) becomes see-through.
+Every sprite is drawn in code by default. To use your own art instead, put a PNG in `public/art/` named after the asset (for example `hero.png`: six 24 × 32 frames side by side, 144 × 32 in all, in the order stand, step, rise, fall, skid, land), at the exact size listed in `src/gfx/art/assets.ts`, then press **T** in the game (or open the game with `?art=external`). Any asset without a fitting file keeps its code-drawn version. Pure magenta (#FF00FF) becomes see-through.
 
 Debug overlay: add `?debug=1` to the address, or press the backtick key.
