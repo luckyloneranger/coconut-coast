@@ -12,6 +12,23 @@
 
 **Waiting for**
 - A GitHub repository: this session can't create one, so the user creates an empty private repo `coconut-coast`, then it gets attached and pushed.
-- The user's OK on the Phase 0 plan.
 
-**Next:** Phase 0 (project setup), after the spec is approved.
+## Phase 0 – Project setup
+
+**Done**
+- Vite + TypeScript project, a fixed 60 Hz loop, and a 480 × 270 screen. Scaling uses whole numbers on big screens (×4 at 1080p) and fills the screen on phones.
+- Keyboard and gamepad input mapped to actions (move, jump, run, pause), and a debug overlay (`?debug=1` or the backtick key).
+- **Art switch:**
+  - Every asset has a code-drawn version (the default).
+  - An external PNG in `public/art/` with the asset's name and exact size replaces it when the art option is EXTERNAL (T key or `?art=external`, saved).
+  - Missing, broken or wrong-size files fall back to code, asset by asset, and magenta turns see-through.
+  - A small Vite plugin lists the files in `public/art`, so the game never asks for files that aren't there.
+- Test room: a stand-in box with a face (24 × 32) that walks (100 px/s) and runs (180 px/s, hold X or Shift).
+- **Tests:** 12 unit tests (loop, input, scaling, art) and 1 browser test (moves the box, switches art, no console errors). Checked by hand with a test PNG: the external sprite replaces the box, with its magenta background removed.
+- CI workflow for the tests (it runs once the GitHub repo exists).
+
+**Known issues / notes**
+- `@playwright/test` is pinned to 1.63 to match the browser installed in this environment.
+- Art switching is on the T key until the Options screen exists (Phase 8).
+
+**Next:** Phase 1, movement and jumping.

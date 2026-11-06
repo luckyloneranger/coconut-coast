@@ -141,12 +141,17 @@ Title → Save slot → World map → Level intro card ("1-1 PALM BEACH") → Le
 
 ## 7. Art and audio direction
 
-Sound is generated in code. For the art, two sources are tried (decided at spec approval):
+Sound is generated in code. The art has two sources, and the game can use either (decided after spec approval):
 
-1. **First choice: images from an image generator.** The user generates sprite sheets, tiles and backgrounds with an AI image tool, using the prompts in `ART_PROMPTS.md`, and saves them as PNGs in `art/raw/`. A cleanup tool (built in the art phase) shrinks each image onto the true pixel grid, cuts out the magenta background, snaps colours to that asset's palette and slices the frames. The cleaned sheets go in `public/art/` and load at start-up. They must still follow every rule below (sizes, palettes, original designs).
-2. **Fallback: art drawn in code**, as pixel maps in TypeScript, for any asset where the generated version doesn't work (inconsistent frames, wrong size, too messy after cleanup).
+- **Default: art drawn in code**, as pixel maps in TypeScript. The game always has a complete set of these, so it never depends on outside files.
+- **Option: external sprites.** Any asset can be replaced by a PNG in `public/art/` with the asset's file name and exact frame size (listed in `src/gfx/art/assets.ts`). The game switches with the art option: `?art=external` in the address, the T key for now, and Options → Art in Phase 8. The choice is saved. Assets without a usable file (missing, broken or the wrong size) quietly use the code version, so external art can arrive one asset at a time. Pure magenta pixels become see-through.
 
-Until art arrives, the game uses plain boxes (working rule 3), so the art source never blocks the gameplay phases. The sprite viewer shows both versions side by side so the user can choose per asset.
+Where the external images come from:
+
+1. **Images from an image generator.** The user generates sprite sheets, tiles and backgrounds with an AI image tool, using the prompts in `ART_PROMPTS.md`, and saves them as PNGs in `art/raw/`. A cleanup tool (built in the art phase) shrinks each image onto the true pixel grid, cuts out the magenta background, snaps colours to that asset's palette and slices the frames. The cleaned sheets go in `public/art/` and load at start-up. They must still follow every rule below (sizes, palettes, original designs).
+2. Or hand-drawn sheets from a pixel editor, if wanted later.
+
+The art switch never blocks the gameplay phases. The sprite viewer (art phase) shows both versions side by side so the user can choose per asset.
 
 ### Visuals (16-bit style)
 
@@ -270,7 +275,7 @@ Every decision has a default, so work can start straight away. Change any of the
 | Game name | Coconut Coast | Any original name |
 | Hero | Pip, a young island courier | Your own character idea |
 | Look and resolution | 16-bit style at 480 × 270 widescreen | 384 × 216 (a little chunkier, less art to draw), or 8-bit at 320 × 180 |
-| Art made in | **Decided:** AI image generator first (prompts in `ART_PROMPTS.md`, cleaned up into PNG sheets), code-drawn pixel maps as the fallback per asset | Hand-drawn sheets from a pixel editor such as Aseprite |
+| Art made in | **Decided:** drawn in code by default; external PNG sprites as an option, per asset (the user is trying an AI image generator with `ART_PROMPTS.md`) | Hand-drawn sheets from a pixel editor such as Aseprite |
 | Sun Meter | On, with Relaxed mode to turn it off | Off by default, or removed |
 | Lives | 3 lives, extra life every 100 fruit | Unlimited lives with checkpoints only |
 | Worlds in v1 | 4 worlds × 3 levels + bosses | Start smaller: 2 worlds |

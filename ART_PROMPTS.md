@@ -73,6 +73,11 @@ Ask for a wide image (16:9 or wider). These are layers that scroll at different 
 
 ## What to send back
 
-Put the PNGs in `art/raw/` (or attach them in chat). I'll run them through the cleanup step, show you the result in the sprite viewer next to the code-drawn version, and we'll pick whichever looks better for each asset.
+The game already has a switch for this: art drawn in code is the default, and external PNGs in `public/art/` replace it asset by asset (press T in the game, or add `?art=external` to the address).
+
+- **Straight from the image tool:** put the PNGs in `art/raw/` (or attach them in chat). They'll be the wrong size, so I'll run them through the cleanup step, which shrinks them onto the real pixel grid and cuts them into frames, and then put the results in `public/art/`.
+- **Already the exact size** (for example, after you fix them up in a pixel editor): put them straight into `public/art/` with the asset's file name. The frame sizes are listed in `src/gfx/art/assets.ts`; frames sit side by side in one row. The game uses the file as soon as you reload.
+
+Either way, we compare each asset with the code-drawn version and keep whichever looks better.
 
 **About rights:** check the terms of the image tool you use, so you're allowed to use its output in your game. Most allow it, but they differ.
