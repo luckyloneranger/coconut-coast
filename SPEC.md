@@ -1,6 +1,6 @@
 # Coconut Coast — Build Spec for Claude Code
 
-Nov 6, 2026 · Harendra Prasad · Draft 2 (16-bit look), waiting for approval
+Nov 6, 2026 · Harendra Prasad · Approved (draft 2, 16-bit look)
 
 ## 1. How to use this spec
 
@@ -141,7 +141,12 @@ Title → Save slot → World map → Level intro card ("1-1 PALM BEACH") → Le
 
 ## 7. Art and audio direction
 
-All graphics and sound are generated in code, so the game needs no image or audio files.
+Sound is generated in code. For the art, two sources are tried (decided at spec approval):
+
+1. **First choice: images from an image generator.** The user generates sprite sheets, tiles and backgrounds with an AI image tool, using the prompts in `ART_PROMPTS.md`, and saves them as PNGs in `art/raw/`. A cleanup tool (built in the art phase) shrinks each image onto the true pixel grid, cuts out the magenta background, snaps colours to that asset's palette and slices the frames. The cleaned sheets go in `public/art/` and load at start-up. They must still follow every rule below (sizes, palettes, original designs).
+2. **Fallback: art drawn in code**, as pixel maps in TypeScript, for any asset where the generated version doesn't work (inconsistent frames, wrong size, too messy after cleanup).
+
+Until art arrives, the game uses plain boxes (working rule 3), so the art source never blocks the gameplay phases. The sprite viewer shows both versions side by side so the user can choose per asset.
 
 ### Visuals (16-bit style)
 
@@ -149,7 +154,7 @@ All graphics and sound are generated in code, so the game needs no image or audi
 - **Colour:** up to 256 colours on screen, organised like 16-bit consoles: each sprite or tile set uses its own small palette of up to 16 colours (including several shades of each hue). Swapping a palette recolours a sprite, for enemy variants, a hit flash or night versions of a level.
 - **Palette effects:** colour cycling for water shimmer, lava glow and waterfalls (the colours rotate, so the art stays still but appears to flow).
 - **See-through effects (new compared with 8-bit):** water you can see Pip through, soft light shafts in the mangrove, fog banks, glows around fire and the Starfruit, and fades between screens. Use canvas alpha sparingly and from fixed values so it stays fast.
-- **Sprites:** pixel maps in code (strings, one character per colour from that sprite's palette), built once into canvases. Shading is drawn into the maps (light from the top left, 3 to 4 shades per colour, darker outlines that pick up the colour next to them rather than flat black). No automatic outline: 16-bit sprites are shaded by hand.
+- **Sprites:** cleaned-up PNG sheets, or pixel maps in code (strings, one character per colour from that sprite's palette); either way built once into canvases. Shading is drawn into the maps (light from the top left, 3 to 4 shades per colour, darker outlines that pick up the colour next to them rather than flat black). No automatic outline: 16-bit sprites are shaded by hand.
 - **Pip:** 24 × 32 small, 24 × 40 Big. Animation with in-between frames: stand (with a breathing idle and a bored animation after 5 s), walk (8), run (8, leaning forward), skid, jump rising, the turn at the top of a jump, fall, land squash, duck, look up, throw, hurt, victory, and a death spin. Pip's look is original: a satchel, a sun-shaped badge, a short bandana. No cap, no overalls, no grass skirt.
 - **Enemies and bosses:** 24 to 32 px enemies with 4 to 8 frames each; bosses up to 96 × 96, built from several parts that move separately (a crab's claws, a golem's arms).
 - **Backgrounds:** 4 to 5 parallax layers per world (sky gradient, far clouds or mountains, mid islands, near foliage, and a foreground layer that passes in front of Pip now and then). Some layers move on their own: drifting clouds, swaying palms, rolling waves, falling ash.
@@ -232,7 +237,7 @@ Each phase ends with something playable.
 ### Performance and compatibility
 
 - A steady 60 frames a second on a mid-range laptop and a recent phone. No new objects every frame in the hot loop. Draw only what's on screen, and pre-draw static layers and tile chunks into canvases.
-- Download under 1 MB compressed (the 16-bit sprite maps are larger, but there are still no image or audio files).
+- Download under 1.5 MB compressed. Generated art arrives as small, palette-reduced PNG sheets; there are still no audio files.
 - Current Chrome, Edge, Firefox and Safari on desktop; Safari on iPhone and Chrome on Android in landscape. Pauses when the tab is hidden.
 
 ### Accessibility
@@ -265,7 +270,7 @@ Every decision has a default, so work can start straight away. Change any of the
 | Game name | Coconut Coast | Any original name |
 | Hero | Pip, a young island courier | Your own character idea |
 | Look and resolution | 16-bit style at 480 × 270 widescreen | 384 × 216 (a little chunkier, less art to draw), or 8-bit at 320 × 180 |
-| Art made in | Code (pixel maps in TypeScript), so no files and no drawing tools needed | PNG sprite sheets drawn in a pixel editor such as Aseprite, if you want to draw or commission art yourself |
+| Art made in | **Decided:** AI image generator first (prompts in `ART_PROMPTS.md`, cleaned up into PNG sheets), code-drawn pixel maps as the fallback per asset | Hand-drawn sheets from a pixel editor such as Aseprite |
 | Sun Meter | On, with Relaxed mode to turn it off | Off by default, or removed |
 | Lives | 3 lives, extra life every 100 fruit | Unlimited lives with checkpoints only |
 | Worlds in v1 | 4 worlds × 3 levels + bosses | Start smaller: 2 worlds |
