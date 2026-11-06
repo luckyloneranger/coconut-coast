@@ -93,7 +93,7 @@ export const GULL = {
   PATROL_SPEED: 40, // px/s
   TRIGGER: 120, // px: swoops when Pip is this close sideways (and below)
   WARNING: 0.4, // s it hovers and flaps fast before diving, so you can see it coming
-  SWOOP_TIME: 2.0, // s for one swoop, down to Pip's height and back up (was 1.1: far too fast)
+  SWOOP_TIME: 1.5, // s for one swoop, down to Pip's height and back up (1.1 felt too fast, 2.0 too slow)
   COOLDOWN: 1.5, // s gliding before it can swoop again
   FRAME_TIME: 0.12, // s per wing frame
 };

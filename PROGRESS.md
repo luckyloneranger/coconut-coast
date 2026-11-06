@@ -104,7 +104,7 @@
 - **Test level:** five crabs, an urchin, a gull over the wide pit, a checkpoint halfway, and spikes under the low ceiling.
 - **Tests:** 49 unit tests (13 new: crab walls, ledges and falling; the gull's swoop; stomp versus hurt with grace; the urchin; bounce height; spikes; death and respawn at the checkpoint with enemies reset; walking into a crab versus stomping it; waking near the screen). The browser test now also checks that walking into a crab counts a death.
 
-- **Fix after play-testing ("the bird is very fast"):** the gull dived about 11 tiles and back in 1.1 s, peaking near 500 px/s, with no warning. Now `GULL.SWOOP_TIME` is 2.0 s (peak about 280 px/s), and there's a new 0.4 s warning (`GULL.WARNING`): it hovers and flaps fast before diving, aiming where Pip was when the warning started, so moving dodges it. A test checks it never dives faster than about 300 px/s.
+- **Fix after play-testing ("the bird is very fast"):** the gull dived about 11 tiles and back in 1.1 s, peaking near 500 px/s, with no warning. 2.0 s then felt too slow, so `GULL.SWOOP_TIME` is now 1.5 s (peak about 370 px/s, sideways about 160 px/s, just under Pip's run). There's also a new 0.4 s warning (`GULL.WARNING`): it hovers and flaps fast before diving, aiming where Pip was when the warning started, so moving dodges it. A test keeps the dive between about 250 and 420 px/s.
 
 **Tuning most likely to need a change** (`COMBAT`, `CRAB`, `GULL` in `tuning.ts`):
 - `STOMP_GRACE`: how forgiving stomps are.

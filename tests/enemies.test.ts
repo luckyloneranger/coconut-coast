@@ -78,7 +78,7 @@ describe('gull', () => {
 });
 
 describe('gull speed', () => {
-  it('never dives faster than about 300 px/s, even from high up', () => {
+  it('never dives as fast as the first version (about 500 px/s), even from high up', () => {
     const tall = new Level({ name: 't', rows: ['g.........', ...Array(10).fill('..........'), 'P.........', '##########'] });
     const gull = new Gull(tall.enemies[0]);
     gull.reset();
@@ -90,7 +90,8 @@ describe('gull speed', () => {
       fastest = Math.max(fastest, Math.hypot(gull.x - last.x, gull.y - last.y) / DT);
       last = { x: gull.x, y: gull.y };
     }
-    expect(fastest).toBeLessThan(320);
+    expect(fastest).toBeLessThan(420);
+    expect(fastest).toBeGreaterThan(250); // but not sluggish either
   });
 });
 
