@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NO_CONTROLS, type PipControls } from '../src/actors/controls';
-import { PipPhysics, approach } from '../src/actors/pip-physics';
+import { PipPhysics, approach, jumpSpeedFor } from '../src/actors/pip-physics';
 import type { Box } from '../src/actors/solids';
 import { PIP } from '../src/game/tuning';
 
@@ -80,13 +80,13 @@ describe('jumping', () => {
 
   it('holding Jump reaches about 4 tiles, and 5 at full run', () => {
     const still = jumpHeight(standing(), 999);
-    expect(still).toBeGreaterThan(60);
-    expect(still).toBeLessThan(68);
+    expect(still).toBeGreaterThanOrEqual(PIP.JUMP_HEIGHT);
+    expect(still).toBeLessThan(PIP.JUMP_HEIGHT + 1);
     const runner = standing();
     run(runner, 1, { right: true, run: true });
     const running = jumpHeight(runner, 999, { right: true, run: true });
-    expect(running).toBeGreaterThan(76);
-    expect(running).toBeLessThan(84);
+    expect(running).toBeGreaterThanOrEqual(PIP.RUN_JUMP_HEIGHT);
+    expect(running).toBeLessThan(PIP.RUN_JUMP_HEIGHT + 1);
   });
 
   it('falls faster than it rises (snappy, not floaty)', () => {
@@ -154,6 +154,15 @@ describe('forgiving timing', () => {
   it('a jump pressed just before landing happens on landing (jump buffer), an early one is forgotten', () => {
     expect(earlyPress(0.06)).toBe(true);
     expect(earlyPress(PIP.JUMP_BUFFER + 0.1)).toBe(false);
+  });
+});
+
+describe('jumpSpeedFor', () => {
+  it('gives a bit more than the smooth formula, to make up for the 60 steps a second', () => {
+    const smooth = Math.sqrt(2 * PIP.GRAVITY * 64);
+    expect(jumpSpeedFor(64)).toBeGreaterThan(smooth);
+    expect(jumpSpeedFor(64)).toBeLessThan(smooth * 1.05);
+    expect(jumpSpeedFor(80)).toBeGreaterThan(jumpSpeedFor(64));
   });
 });
 

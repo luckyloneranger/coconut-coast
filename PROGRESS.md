@@ -46,8 +46,10 @@
 - **Stand-in sprite:** 6 frames (stand, step, rise stretched, fall, skid leaning, land squashed). `hero.png` for external art is now 144 × 32.
 - **Tests:** 23 unit tests (11 new: speeds, skid, walls, tap and hold heights, run bonus, fall speed, ceilings, coyote time, jump buffer) and the browser test now also jumps.
 
+- **Fix after play-testing:** the highest jump was 4.82 tiles instead of 5 (and 3.83 instead of 4 standing), because the game moves in 60 steps a second and the take-off speeds came from the smooth formula. `tuning.ts` now sets the heights directly (`JUMP_HEIGHT` 64 px, `RUN_JUMP_HEIGHT` 80 px), the game works out the exact take-off speed, and the tests check the heights to within 1 px. Full height needs full running speed, which takes about 0.5 s (60 px) of running.
+
 **Tuning most likely to need a change** (`PIP` in `tuning.ts`):
-- `JUMP_SPEED` and `GRAVITY`: jump height and how floaty it feels.
+- `JUMP_HEIGHT`, `RUN_JUMP_HEIGHT` and `GRAVITY`: how high and how floaty (higher gravity with the same height = a quicker, snappier jump).
 - `FALL_GRAVITY_SCALE`: how quickly Pip comes down.
 - `DECEL`: how suddenly Pip stops.
 - `JUMP_CUT`: how small a tap-jump is.

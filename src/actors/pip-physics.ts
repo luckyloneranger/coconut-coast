@@ -1,7 +1,7 @@
 // Pip's movement as plain logic: controls and solid boxes in, position and
 // state out. No drawing here, so every rule can be unit-tested.
 
-import { PIP } from '../game/tuning';
+import { LOOP, PIP } from '../game/tuning';
 import type { PipControls } from './controls';
 import { overlaps, type Box } from './solids';
 
@@ -85,7 +85,7 @@ export class PipPhysics {
     this.coyote = this.onGround ? PIP.COYOTE_TIME : Math.max(0, this.coyote - dt);
     if (this.buffer <= 0 || this.coyote <= 0) return;
     const runShare = clamp01((Math.abs(this.vx) - PIP.WALK_SPEED) / (PIP.RUN_SPEED - PIP.WALK_SPEED));
-    this.vy = -(PIP.JUMP_SPEED + PIP.RUN_JUMP_BONUS * runShare);
+    this.vy = -(WALK_JUMP_SPEED + (RUN_JUMP_SPEED - WALK_JUMP_SPEED) * runShare);
     this.onGround = false;
     this.rising = true;
     this.buffer = 0;
@@ -145,6 +145,30 @@ export class PipPhysics {
     return speed > PIP.WALK_SPEED + 1 ? 'run' : 'walk';
   }
 }
+
+/**
+ * The take-off speed (px/s) that rises exactly `height` px with Jump held,
+ * for the game's fixed 60 steps a second. The smooth formula (v² = 2gh)
+ * comes up about 4% short with steps, so this counts the steps instead.
+ */
+export function jumpSpeedFor(height: number, gravity = PIP.GRAVITY, dt = 1 / LOOP.STEPS_PER_SECOND): number {
+  const rise = (v: number) => {
+    let h = 0;
+    for (let vy = v - gravity * dt; vy > 0; vy -= gravity * dt) h += vy * dt; // same order as update(): gravity, then move
+    return h;
+  };
+  let lo = 0;
+  let hi = Math.sqrt(2 * gravity * height) * 2;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (rise(mid) < height) lo = mid;
+    else hi = mid;
+  }
+  return hi;
+}
+
+const WALK_JUMP_SPEED = jumpSpeedFor(PIP.JUMP_HEIGHT);
+const RUN_JUMP_SPEED = jumpSpeedFor(PIP.RUN_JUMP_HEIGHT);
 
 /** Move `value` toward `target` by at most `step`. */
 export function approach(value: number, target: number, step: number): number {

@@ -33,8 +33,9 @@ export const PIP = {
   GRAVITY: 800, // while rising: a full jump takes about 0.4 s to the top
   FALL_GRAVITY_SCALE: 1.6, // falling is heavier than rising, so jumps feel snappy
   MAX_FALL_SPEED: 400, // fall speed cap
-  JUMP_SPEED: 320, // take-off speed: about 64 px (4 tiles) with Jump held
-  RUN_JUMP_BONUS: 38, // extra take-off speed at full run: about 80 px (5 tiles)
+  // Jump heights with Jump held (the take-off speed is worked out from these, see jumpSpeedFor).
+  JUMP_HEIGHT: 64, // px (4 tiles) from standing or walking
+  RUN_JUMP_HEIGHT: 80, // px (5 tiles) at full running speed; in between, it scales with speed
   JUMP_CUT: 0.4, // letting go of Jump while rising keeps this share of upward speed (a tap is about 1 tile)
   COYOTE_TIME: 0.08, // s after running off an edge that a jump still works
   JUMP_BUFFER: 0.1, // s before landing that a jump press is remembered
