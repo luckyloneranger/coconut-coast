@@ -60,6 +60,43 @@ export const LEVEL = {
   FALL_BELOW: 48, // px below the bottom of the level before a fall counts as lost
 };
 
+/** Stomping, getting hit and coming back. */
+export const COMBAT = {
+  STOMP_GRACE: 6, // px: feet this far below an enemy's top still count as landing on it
+  STOMP_BOUNCE: 20, // px Pip bounces up off a stomped enemy
+  STOMP_BOUNCE_HELD: 56, // px if Jump is held during the stomp (for chains)
+  SQUASH_TIME: 0.35, // s a stomped enemy shows squashed before it pops
+  DEATH_POP: 300, // px/s Pip is thrown up when hit
+  DEATH_GRAVITY: 700, // px/s² pulling Pip down during the death spin
+  DEATH_TIME: 1.2, // s from the hit to coming back
+  WAKE_MARGIN: 64, // px outside the screen at which enemies start moving
+};
+
+/** Enemies. */
+export const CRAB = {
+  WIDTH: 20, // px, collision box (sprite 24 x 16)
+  HEIGHT: 14,
+  SPEED: 30, // px/s walking
+  GRAVITY: 900, // px/s²
+  FRAME_TIME: 0.15, // s per walk frame
+};
+
+export const URCHIN = {
+  SIZE: 14, // px, collision box (sprite 16 x 16)
+  FRAME_TIME: 0.3, // s per spike pulse frame
+};
+
+export const GULL = {
+  WIDTH: 20, // px, collision box (sprite 24 x 20)
+  HEIGHT: 12,
+  PATROL: 48, // px it glides either side of where it started
+  PATROL_SPEED: 40, // px/s
+  TRIGGER: 120, // px: swoops when Pip is this close sideways (and below)
+  SWOOP_TIME: 1.1, // s for one swoop, down to Pip's height and back up
+  COOLDOWN: 1.5, // s gliding before it can swoop again
+  FRAME_TIME: 0.12, // s per wing frame
+};
+
 /** External sprites (see gfx/art). */
 export const ART = {
   MAGENTA_TOLERANCE: 40, // 0-255: how far from pure #FF00FF a pixel can be and still turn see-through

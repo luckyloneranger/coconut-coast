@@ -2,7 +2,13 @@
 // a clear message instead of a broken level.
 
 import type { Box } from '../actors/solids';
-import { LEGEND, TILE, type TileKind } from './tiles';
+import { ENEMY_MARKERS, LEGEND, TILE, type EnemyKind, type TileKind } from './tiles';
+
+/** A spot in the level, in px: feet position (bottom centre of a tile). */
+export interface Spot {
+  x: number;
+  y: number;
+}
 
 export interface LevelSource {
   name: string; // e.g. "0-1 TEST LEVEL"
@@ -18,6 +24,10 @@ export class Level {
   readonly start: { x: number; y: number };
   /** The end flag's foot (px), if the level has one. */
   readonly flag: { x: number; y: number } | null;
+  /** Checkpoint posts, left to right. */
+  readonly checkpoints: Spot[] = [];
+  /** Where each enemy starts. */
+  readonly enemies: (Spot & { kind: EnemyKind })[] = [];
 
   constructor(src: LevelSource) {
     const problems = checkLevel(src);
@@ -35,10 +45,34 @@ export class Level {
         const foot = { x: tx * TILE + TILE / 2, y: (ty + 1) * TILE };
         if (entry.marker === 'start') start = foot;
         if (entry.marker === 'flag') flag = foot;
+        if (entry.marker === 'checkpoint') this.checkpoints.push(foot);
+        if (entry.marker && (ENEMY_MARKERS as readonly string[]).includes(entry.marker)) this.enemies.push({ ...foot, kind: entry.marker as EnemyKind });
       }
     });
     this.start = start;
     this.flag = flag;
+    this.checkpoints.sort((a, b) => a.x - b.x);
+  }
+
+  /** Is this tile something you stand on (ground or a one-way top)? */
+  isFloor(tx: number, ty: number): boolean {
+    const t = this.tileAt(tx, ty);
+    return t === 'ground' || t === 'oneway';
+  }
+
+  /** Spike tiles near an area, as their sharp part (the lower 10 px, slightly narrower). */
+  hazardsNear(area: Box): Box[] {
+    const out: Box[] = [];
+    const tx0 = Math.floor(area.x / TILE) - 1;
+    const tx1 = Math.floor((area.x + area.w) / TILE) + 1;
+    const ty0 = Math.floor(area.y / TILE) - 1;
+    const ty1 = Math.floor((area.y + area.h) / TILE) + 1;
+    for (let ty = ty0; ty <= ty1; ty++) {
+      for (let tx = tx0; tx <= tx1; tx++) {
+        if (this.tileAt(tx, ty) === 'spikes') out.push({ x: tx * TILE + SPIKE_INSET, y: ty * TILE + TILE - SPIKE_HEIGHT, w: TILE - 2 * SPIKE_INSET, h: SPIKE_HEIGHT });
+      }
+    }
+    return out;
   }
 
   get widthPx(): number {
@@ -73,6 +107,9 @@ export class Level {
     return { solids, oneWays };
   }
 }
+
+const SPIKE_HEIGHT = 10; // px of a spike tile that hurts (its points)
+const SPIKE_INSET = 2; // px trimmed from each side, so brushing the edge is fair
 
 /** Everything wrong with a level's text map (empty when it's fine). */
 export function checkLevel(src: LevelSource): string[] {

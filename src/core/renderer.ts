@@ -55,18 +55,18 @@ export class Renderer {
     this.ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
   }
 
-  /** One frame of a sprite sheet with its top-left at (x, y); `flip` mirrors it (facing left). */
-  sprite(sheet: SpriteSheet, frame: number, x: number, y: number, flip = false): void {
+  /** One frame of a sprite sheet with its top-left at (x, y); `flip` mirrors it (facing left), `upsideDown` turns it over. */
+  sprite(sheet: SpriteSheet, frame: number, x: number, y: number, flip = false, upsideDown = false): void {
     const f = ((frame % sheet.frames) + sheet.frames) % sheet.frames;
     const dx = Math.round(x);
     const dy = Math.round(y);
-    if (!flip) {
+    if (!flip && !upsideDown) {
       this.ctx.drawImage(sheet.image, f * sheet.frameW, 0, sheet.frameW, sheet.frameH, dx, dy, sheet.frameW, sheet.frameH);
       return;
     }
     this.ctx.save();
-    this.ctx.translate(dx + sheet.frameW, dy);
-    this.ctx.scale(-1, 1);
+    this.ctx.translate(dx + (flip ? sheet.frameW : 0), dy + (upsideDown ? sheet.frameH : 0));
+    this.ctx.scale(flip ? -1 : 1, upsideDown ? -1 : 1);
     this.ctx.drawImage(sheet.image, f * sheet.frameW, 0, sheet.frameW, sheet.frameH, 0, 0, sheet.frameW, sheet.frameH);
     this.ctx.restore();
   }

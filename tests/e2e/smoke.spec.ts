@@ -4,7 +4,7 @@ const line = (page: import('@playwright/test').Page, prefix: string) =>
   page.evaluate((p) => ((window as any).__cc.lines as string[]).find((l) => l.startsWith(p)) ?? '', prefix);
 const num = async (page: import('@playwright/test').Page, prefix: string, i = 1) => Number((await line(page, prefix)).split(' ')[i]);
 
-test('the test level loads, Pip walks, jumps and the camera scrolls, with no console errors', async ({ page }) => {
+test('the test level loads, Pip jumps, the camera scrolls and a crab hit counts, with no console errors', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => {
@@ -21,7 +21,9 @@ test('the test level loads, Pip walks, jumps and the camera scrolls, with no con
   await page.keyboard.up('Space');
   await expect.poll(() => num(page, 'Y '), { timeout: 3000 }).toBe(ground);
 
-  // Run right: Pip moves and the camera follows (and looks ahead).
+  // Run right (invincible, so the first crab can't stop us): Pip moves and the camera follows.
+  await page.keyboard.press('Backquote'); // debug overlay on
+  await page.keyboard.press('KeyI'); // invincible
   const x0 = await num(page, 'X ');
   await page.keyboard.down('ShiftLeft');
   await page.keyboard.down('ArrowRight');
@@ -30,6 +32,13 @@ test('the test level loads, Pip walks, jumps and the camera scrolls, with no con
   await page.keyboard.up('ShiftLeft');
   expect(await num(page, 'X ')).toBeGreaterThan(x0 + 60);
   expect(await num(page, 'CAM ')).toBeGreaterThan(0);
+  expect(await num(page, 'DEATHS ')).toBe(0);
+
+  // Not invincible any more: walking into the next crab costs a life.
+  await page.keyboard.press('KeyI');
+  await page.keyboard.down('ArrowRight');
+  await expect.poll(() => num(page, 'DEATHS '), { timeout: 8000 }).toBe(1);
+  await page.keyboard.up('ArrowRight');
 
   // External art with no files falls back to code.
   await page.keyboard.press('KeyT');

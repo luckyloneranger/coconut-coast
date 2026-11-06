@@ -1,7 +1,7 @@
 // Pip's movement as plain logic: controls and solid boxes in, position and
 // state out. No drawing here, so every rule can be unit-tested.
 
-import { LOOP, PIP } from '../game/tuning';
+import { COMBAT, LOOP, PIP } from '../game/tuning';
 import type { PipControls } from './controls';
 import { overlaps, type Box } from './solids';
 
@@ -171,6 +171,13 @@ export class PipPhysics {
     return this.onTopOf(oneWays) && !solids.some((s) => overlaps(probe, s));
   }
 
+  /** Bounce up off a stomped enemy: higher with Jump held (so stomps can chain). */
+  bounce(jumpHeld: boolean): void {
+    this.vy = -(jumpHeld ? STOMP_BOUNCE_HELD_SPEED : STOMP_BOUNCE_SPEED);
+    this.onGround = false;
+    this.rising = jumpHeld; // letting go during a held bounce cuts it short, like a jump
+  }
+
   /** Which picture to show (drawing only). */
   get pose(): PipPose {
     if (!this.onGround) return this.vy < 0 ? 'rise' : 'fall';
@@ -204,6 +211,8 @@ export function jumpSpeedFor(height: number, gravity = PIP.GRAVITY, dt = 1 / LOO
 }
 
 const WALK_JUMP_SPEED = jumpSpeedFor(PIP.JUMP_HEIGHT);
+const STOMP_BOUNCE_SPEED = jumpSpeedFor(COMBAT.STOMP_BOUNCE);
+const STOMP_BOUNCE_HELD_SPEED = jumpSpeedFor(COMBAT.STOMP_BOUNCE_HELD);
 const RUN_JUMP_SPEED = jumpSpeedFor(PIP.RUN_JUMP_HEIGHT);
 
 /** Move `value` toward `target` by at most `step`. */

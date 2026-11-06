@@ -25,7 +25,9 @@ export class Game {
     attachKeyboard(this.input);
     this.art = new ArtLibrary(artSourceFrom(location.search, loadSetting('art')), externalFiles);
     void this.art.loadExternal(import.meta.env.BASE_URL);
-    this.scenes.push(new LevelScene(TEST_LEVEL, this.art, () => this.toggleArt(), this.renderer.width, this.renderer.height));
+    this.scenes.push(
+      new LevelScene(TEST_LEVEL, this.art, () => this.toggleArt(), this.renderer.width, this.renderer.height, () => this.debug.visible),
+    );
   }
 
   /** Switch between code-drawn and external sprites, and remember the choice. */

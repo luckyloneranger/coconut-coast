@@ -12,7 +12,8 @@ export type Action =
   | 'CONFIRM'
   | 'BACK'
   | 'ART_TOGGLE'
-  | 'DEBUG';
+  | 'DEBUG'
+  | 'DEBUG_INVINCIBLE';
 
 export type KeyMap = Record<Action, string[]>;
 
@@ -28,6 +29,7 @@ export const DEFAULT_KEYMAP: KeyMap = {
   BACK: ['Escape', 'PadB'],
   ART_TOGGLE: ['KeyT'], // switch between code-drawn and external sprites (until Options exists)
   DEBUG: ['Backquote'],
+  DEBUG_INVINCIBLE: ['KeyI'], // only while the debug overlay is open
 };
 
 /** Keys whose browser default (page scrolling) we block. */

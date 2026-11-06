@@ -275,6 +275,7 @@ Every decision has a default, so work can start straight away. Change any of the
 | Game name | Coconut Coast | Any original name |
 | Slopes | None in v1: flat ground and steps (decided in Phase 2) | Add slopes later if a world needs them |
 | Drop through one-way platforms | Down + Jump (decided in Phase 2) | — |
+| Enemies after a death | All come back to their starting places (decided in Phase 3) | Defeated enemies stay gone |
 | Hero | Pip, a young island courier | Your own character idea |
 | Look and resolution | 16-bit style at 480 × 270 widescreen | 384 × 216 (a little chunkier, less art to draw), or 8-bit at 320 × 180 |
 | Art made in | **Decided:** drawn in code by default; external PNG sprites as an option, per asset (the user is trying an AI image generator with `ART_PROMPTS.md`) | Hand-drawn sheets from a pixel editor such as Aseprite |

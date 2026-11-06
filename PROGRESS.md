@@ -85,3 +85,29 @@
 - The start area was widened by 8 tiles so the camera has room to start moving before the first pit.
 
 **Next:** Phase 3, enemies and stomping.
+
+## Phase 3 – Enemies and stomping
+
+**Done**
+- **Three enemies** (code-drawn placeholders, 4 frames each, matching the sizes in `ART_PROMPTS.md`):
+  - **Crab** (`c`): walks and turns at walls and ledges; can be stomped.
+  - **Urchin** (`u`): sits still with its spikes pulsing; landing on it hurts.
+  - **Gull** (`g`): glides, swoops in a curve towards Pip when close, then climbs back; can be stomped.
+- **Stomp or hurt:**
+  - Landing on top (with a 6 px grace) squashes an enemy. Pip bounces up, higher with Jump held so stomps can chain, and landing on two at once gets both.
+  - Any other touch is a hit.
+- **Death:** Pip pops up and spins off the screen, then comes back at the last checkpoint with every enemy reset. Falling in a pit works the same way.
+- **Checkpoints** (`C`): the flag goes up when you pass it.
+- **Spikes** (`^`): hurt from any side, with fair 2 px edges.
+- **Waking up:** enemies only start moving within 64 px of the screen.
+- **Debug:** I (with the overlay open) makes Pip invincible.
+- **Test level:** five crabs, an urchin, a gull over the wide pit, a checkpoint halfway, and spikes under the low ceiling.
+- **Tests:** 49 unit tests (13 new: crab walls, ledges and falling; the gull's swoop; stomp versus hurt with grace; the urchin; bounce height; spikes; death and respawn at the checkpoint with enemies reset; walking into a crab versus stomping it; waking near the screen). The browser test now also checks that walking into a crab counts a death.
+
+**Tuning most likely to need a change** (`COMBAT`, `CRAB`, `GULL` in `tuning.ts`):
+- `STOMP_GRACE`: how forgiving stomps are.
+- `STOMP_BOUNCE_HELD`: the chain bounce height.
+- `GULL.TRIGGER` and `GULL.SWOOP_TIME`: how early and how fast gulls swoop.
+- `CRAB.SPEED`.
+
+**Next:** Phase 4, items and forms (fruit, crates, Mango, Slingshot, Starfruit, Sun Meter, lives, HUD).
