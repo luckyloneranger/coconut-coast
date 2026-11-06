@@ -45,9 +45,9 @@ export class Input implements InputSnapshot {
     if (!code.startsWith('Touch') && !code.startsWith('Pad')) this.lastKey = code; // keyboard keys only (for remapping)
     const actions = this.actionsByKey.get(code);
     if (!actions) return;
-    for (const a of actions) {
-      if (!this.isActionHeld(a)) this.pendingPressed.add(a);
-    }
+    // Every new key press counts, even if another key for the same action is
+    // already held (hold Shift to run, tap X to throw).
+    for (const a of actions) this.pendingPressed.add(a);
     this.heldKeys.add(code);
   }
 

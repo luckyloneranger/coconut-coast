@@ -138,6 +138,8 @@
 - **Code:** the level scene was split into rules (`level-scene.ts`) and drawing (`level-draw.ts`) to keep files small.
 - **Tests:** 74 unit tests (24 new: fruit, coins, extra lives, the stomp chain, the Sun Meter and Relaxed mode, forms and blinking, Starfruit, crates and fruit bursts, cracked stone, seed pod arcs, bounces, walls and the two-at-once limit, pods beating the urchin, Starfruit and Big hits in play, game over, Sun running out, and the test level's contents and Big-sized gaps). The browser test now checks fruit, score and lives.
 
+**Fix after play-testing:** holding Shift to run and tapping X to throw did nothing, because both keys are Run and the second press wasn't counted while Shift was held. Now every new key press counts, even when another key for the same action is already down.
+
 **Found while building:** seed pods launched from Big Pip's chest flew over low enemies like the urchin, and only came down near the end of their flight. Now they skip along the ground twice (`SEED.BOUNCES`, `SEED.BOUNCE_KEEP`).
 
 **Tuning most likely to need a change:**

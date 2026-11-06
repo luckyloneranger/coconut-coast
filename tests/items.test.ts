@@ -221,6 +221,17 @@ describe('seed pods', () => {
   });
 });
 
+describe('throwing while running', () => {
+  it('holding Run and tapping it again with another key fires a pod', () => {
+    const scene = new LevelScene({ name: 't', rows: ['P' + '.'.repeat(30), '#'.repeat(31)] }, ART, () => {});
+    scene.form.takeSlingshot();
+    play(scene, 0.3);
+    play(scene, 0.2, ['RUN', 'RIGHT']);
+    scene.update(DT, input(['RUN', 'RIGHT'], ['RUN'])); // the X tap while Shift is held
+    expect(scene.pods).toHaveLength(1);
+  });
+});
+
 describe('Starfruit in play', () => {
   it('walking into a crab while starred defeats it', () => {
     const scene = new LevelScene({ name: 's', rows: ['P....c....', '##########'] }, ART, () => {});

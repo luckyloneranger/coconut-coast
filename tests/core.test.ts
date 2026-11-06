@@ -31,6 +31,23 @@ describe('input', () => {
     input.beginStep();
     expect(input.isDown('RUN')).toBe(true);
   });
+  it('a second key for an action still counts as a press while the first is held (hold Shift, tap X)', () => {
+    const input = new Input(DEFAULT_KEYMAP);
+    input.keyDown('ShiftLeft');
+    input.beginStep();
+    expect(input.justPressed('RUN')).toBe(true);
+    input.beginStep();
+    expect(input.justPressed('RUN')).toBe(false);
+    expect(input.isDown('RUN')).toBe(true);
+    input.keyDown('KeyX');
+    input.beginStep();
+    expect(input.justPressed('RUN')).toBe(true); // the throw
+    input.keyUp('KeyX');
+    input.beginStep();
+    expect(input.isDown('RUN')).toBe(true); // still running on Shift
+    expect(input.justReleased('RUN')).toBe(false);
+  });
+
   it('a tap between two steps is never lost', () => {
     const input = new Input(DEFAULT_KEYMAP);
     input.keyDown('KeyZ');
