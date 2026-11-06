@@ -1,6 +1,6 @@
 # Coconut Coast — Build Spec for Claude Code
 
-Nov 6, 2026 · Harendra Prasad · Draft 1, waiting for approval
+Nov 6, 2026 · Harendra Prasad · Draft 2 (16-bit look), waiting for approval
 
 ## 1. How to use this spec
 
@@ -16,9 +16,9 @@ Claude Code builds the game in short phases. Each phase ends with something you 
 
 ## 2. Game overview and design pillars
 
-**Coconut Coast** (working title) is a retro 8-bit side-scrolling platformer for the browser. A young island courier named **Pip** runs, jumps and stomps across a chain of tropical islands to deliver the Sun Shell back to the lighthouse before the islands fall into an endless night.
+**Coconut Coast** (working title) is a 16-bit-style side-scrolling platformer for the browser. A young island courier named **Pip** runs, jumps and stomps across a chain of tropical islands to deliver the Sun Shell back to the lighthouse before the islands fall into an endless night.
 
-It belongs to the same family as the 1980s console platformers (run right, jump on enemies, find secrets, beat a boss at the end of each world), but every character, level, sprite, tune and name is new.
+It belongs to the same family as the console platformers of the late 1980s and early 1990s, in the style of the 16-bit era: bigger, more detailed sprites, rich colour, deep parallax backgrounds and lush music. The gameplay follows the classic formula (run right, jump on enemies, find secrets, beat a boss at the end of each world), but every character, level, sprite, tune and name is new.
 
 **Design pillars**
 
@@ -26,7 +26,7 @@ It belongs to the same family as the 1980s console platformers (run right, jump 
 2. **Momentum.** Walking is safe; running is fast and risky. Levels reward players who learn to keep moving.
 3. **Short, readable levels.** Each level takes 2 to 4 minutes. Hazards are clear at a glance, and nothing kills you that you couldn't see coming.
 4. **Secrets for the curious.** Hidden fruit, bonus rooms and shortcuts, but nothing required to finish.
-5. **Authentic retro look and sound.** Low resolution, a limited palette, chiptune music, all generated in code and all original.
+5. **A rich 16-bit look and sound.** Detailed, smoothly animated sprites, hundreds of colours, layered parallax scenery, see-through water and light, and warm synth music with echo. All generated in code and all original.
 6. **Runs anywhere.** Desktop browsers with keyboard or gamepad, phones and tablets with on-screen buttons. No install, no login, no server.
 
 **Original work only.** Do not copy, trace or closely imitate the characters, sprites, levels, music, sounds, names or logos of any existing game, including Nintendo's *Super Mario* series or Hudson Soft's *Adventure Island*. The genre and its general ideas (running, jumping, stomping enemies, power-ups, worlds and bosses) are shared by many games and are fine. The specific look and content must be our own.
@@ -60,9 +60,9 @@ Menus use the arrows, Enter or Space to confirm and Esc to go back (pad: A and B
 
 ### Movement (the feel)
 
-All values are starting points in `tuning.ts`, in pixels and seconds at 60 steps per second.
+All values are starting points in `tuning.ts`, in pixels and seconds at 60 steps per second, at the game's 480 × 270 resolution with 16 px tiles.
 
-- **Walk** top speed about 80 px/s; **run** (button held) about 140 px/s. Speeding up and slowing down take a moment, so Pip has weight. Turning around while running skids briefly.
+- **Walk** top speed about 100 px/s; **run** (button held) about 180 px/s. Speeding up and slowing down take a moment, so Pip has weight. Turning around while running skids briefly.
 - **Variable jump:** a press gives a strong upward push. Letting go early cuts the rise short, so a tap is a hop and a hold reaches about 4 tiles high (5 when running).
 - **Coyote time:** you can still jump for about 0.08 s after running off a ledge.
 - **Jump buffer:** a jump pressed up to about 0.1 s before landing still happens on landing.
@@ -120,7 +120,7 @@ Each world has three levels and a boss arena. Level 3 of each world is the harde
 
 ### Level format
 
-- Tiles are 16 × 16 px; a screen shows 20 × 11 tiles. Levels are up to about 200 tiles long and 11 to 30 tiles tall.
+- Tiles are 16 × 16 px; a screen shows 30 × about 17 tiles. Levels are up to about 250 tiles long and 17 to 40 tiles tall. Tiles come in sets with edge and corner pieces, so ground looks hand-built rather than blocky; the level text uses one character per kind of tile and the game picks the right edge piece by looking at its neighbours (auto-tiling).
 - Levels are written as **text maps in code** (one character per tile), with a legend for ground, platforms, hazards, crates, enemies, fruit, checkpoints and the goal. This keeps levels easy to read, change and test without an editor.
 - Each level ends at a **goal hut**: walking in finishes the level, with a bonus for remaining Sun Meter and time.
 
@@ -143,21 +143,26 @@ Title → Save slot → World map → Level intro card ("1-1 PALM BEACH") → Le
 
 All graphics and sound are generated in code, so the game needs no image or audio files.
 
-### Visuals
+### Visuals (16-bit style)
 
-- **Resolution:** 320 × 180 (16:9) on an offscreen canvas, scaled by the largest whole number that fits, image smoothing off, so the pixels stay crisp.
-- **Palette:** one fixed palette of about 32 original colours, chosen for bright tropical daytime, a swampy green, a volcanic red and a stormy blue. Blend with dithering, not see-through colours.
-- **Sprites:** pixel maps in code (strings, one character per colour), built once into canvases with an outline and top-edge highlights.
-- **Pip:** small form 16 × 16, Big form 16 × 24. Frames: stand, walk (4), run (4), skid, jump up, fall, duck, throw, hurt, victory, and a death spin. Pip's look is original: a satchel, a sun-shaped badge, a short bandana. No cap, no overalls, no grass skirt.
-- **Backgrounds:** two or three parallax layers per world (far sky and clouds, distant islands or mountains, near foliage), with animated water and waving palms.
-- **Font:** an original 8 × 8 bitmap font in code, plus a small 3 × 5 font for numbers.
-- **Game feel:** dust when you skid or land, a squash and stretch on landing, a short screen shake on a boss hit, sparkles on fruit, a pop on stomped enemies. Shake and flashing can be reduced in Options.
+- **Resolution:** 480 × 270 (16:9) on an offscreen canvas. It scales exactly ×4 to a 1080p screen, ×2 to 960 × 540, and ×1.5 to 720p. On desktop it scales by whole numbers with smoothing off, so the pixels stay crisp. On phones a whole-number scale would leave the game tiny, so it fills the screen at the nearest size with smoothing still off. That makes a few pixel rows slightly uneven, which is barely visible at phone sizes.
+- **Colour:** up to 256 colours on screen, organised like 16-bit consoles: each sprite or tile set uses its own small palette of up to 16 colours (including several shades of each hue). Swapping a palette recolours a sprite, for enemy variants, a hit flash or night versions of a level.
+- **Palette effects:** colour cycling for water shimmer, lava glow and waterfalls (the colours rotate, so the art stays still but appears to flow).
+- **See-through effects (new compared with 8-bit):** water you can see Pip through, soft light shafts in the mangrove, fog banks, glows around fire and the Starfruit, and fades between screens. Use canvas alpha sparingly and from fixed values so it stays fast.
+- **Sprites:** pixel maps in code (strings, one character per colour from that sprite's palette), built once into canvases. Shading is drawn into the maps (light from the top left, 3 to 4 shades per colour, darker outlines that pick up the colour next to them rather than flat black). No automatic outline: 16-bit sprites are shaded by hand.
+- **Pip:** 24 × 32 small, 24 × 40 Big. Animation with in-between frames: stand (with a breathing idle and a bored animation after 5 s), walk (8), run (8, leaning forward), skid, jump rising, the turn at the top of a jump, fall, land squash, duck, look up, throw, hurt, victory, and a death spin. Pip's look is original: a satchel, a sun-shaped badge, a short bandana. No cap, no overalls, no grass skirt.
+- **Enemies and bosses:** 24 to 32 px enemies with 4 to 8 frames each; bosses up to 96 × 96, built from several parts that move separately (a crab's claws, a golem's arms).
+- **Backgrounds:** 4 to 5 parallax layers per world (sky gradient, far clouds or mountains, mid islands, near foliage, and a foreground layer that passes in front of Pip now and then). Some layers move on their own: drifting clouds, swaying palms, rolling waves, falling ash.
+- **Lighting and weather:** time of day per level (dawn, day, sunset, night) by swapping palettes; fireflies and glowing mushrooms at night; rain and wind in Cloud Reef.
+- **Fonts:** an original 8 × 8 bitmap font with a shaded, outlined title style for headings, plus a small 5 × 7 font for HUD numbers.
+- **Game feel:** dust and splash particles, squash and stretch, after-images when running at top speed, a screen shake on big impacts, a short freeze frame on a stomp, sparkles on fruit, an enemy pop with flying stars. Shake and flashing can be reduced in Options.
+- **Art budget:** 16-bit art takes far more pixels than 8-bit. To keep files manageable, each sprite's map lives in its own small file under `gfx/sprites/`, and a debug sprite viewer (`?sprites=1`) shows every sprite and animation so the art can be checked without playing.
 
-### Audio
+### Audio (16-bit style)
 
-- A small chiptune synthesiser in code (Web Audio): square, triangle and noise channels.
-- Original tunes: title, world map, one per world, boss, invincible, level clear, game over.
-- Effects: jump, stomp, fruit, power-up, hurt, crate bump, throw, checkpoint, extra life, goal.
+- A synthesiser in code (Web Audio) with 8 voices, closer to 16-bit consoles than to 8-bit chiptune: simple FM and wavetable instruments (bass, plucked strings, marimba, steel drum, brass stabs, pads), a noise drum kit, and a shared echo and reverb, which was the signature of 16-bit music.
+- Original tunes: title, world map, one per world (a laid-back steel-drum beach tune, a swampy groove, a driving volcano theme, an airy sky theme), boss, invincible, level clear, game over. Tunes loop cleanly.
+- Effects: jump, stomp, fruit, power-up, hurt, crate bump, throw, checkpoint, extra life, goal, splash, plus ambient loops (waves, swamp frogs, rumbling lava, wind).
 - Music and effects volumes are separate, plus mute.
 
 ## 8. Technical architecture
@@ -198,8 +203,9 @@ Each phase ends with something playable.
 | 2 | **Tiles and camera:** text-map levels, tile collision, one-way platforms, a scrolling camera with a dead zone, pits | A box running through a test level |
 | 3 | **Enemies and stomping:** crab, urchin, gull; hits, deaths, respawn at the checkpoint | A level with danger |
 | 4 | **Items and forms:** fruit, crates, Mango (Big), Slingshot, Starfruit, Sun Meter, lives, HUD | The full core loop, still in boxes |
-| 5 | **Art pass:** palette, Pip's sprites, tiles, Palm Beach backgrounds, effects | It looks like the game |
-| 6 | **Audio:** synthesiser, effects, Palm Beach tune | It sounds like the game |
+| 5 | **Art pass, part 1:** palette system, sprite viewer, Pip's full animation set, Palm Beach tile set with auto-tiling | Pip and the ground look finished |
+| 5b | **Art pass, part 2:** parallax backgrounds, colour cycling, see-through water, particles, enemy sprites | Palm Beach looks like a 16-bit game |
+| 6 | **Audio:** the 8-voice synth with echo, effects, Palm Beach tune | It sounds like the game |
 | 7 | **World 1 content:** levels 1-1 to 1-3, Big Shelly boss, goal hut, tally | One full world |
 | 8 | **Screens and saving:** title, save slots, world map, pause, options, Relaxed mode | A real game from start to the end of World 1 |
 | 9 | **Touch and gamepad:** on-screen buttons, pad support, phone layout | Playable on a phone |
@@ -225,8 +231,8 @@ Each phase ends with something playable.
 
 ### Performance and compatibility
 
-- A steady 60 frames a second on a mid-range laptop and a recent phone. No new objects every frame in the hot loop.
-- Download under 500 KB compressed.
+- A steady 60 frames a second on a mid-range laptop and a recent phone. No new objects every frame in the hot loop. Draw only what's on screen, and pre-draw static layers and tile chunks into canvases.
+- Download under 1 MB compressed (the 16-bit sprite maps are larger, but there are still no image or audio files).
 - Current Chrome, Edge, Firefox and Safari on desktop; Safari on iPhone and Chrome on Android in landscape. Pauses when the tab is hidden.
 
 ### Accessibility
@@ -258,7 +264,8 @@ Every decision has a default, so work can start straight away. Change any of the
 | --- | --- | --- |
 | Game name | Coconut Coast | Any original name |
 | Hero | Pip, a young island courier | Your own character idea |
-| Screen shape | 320 × 180 widescreen | 256 × 240, the squarer classic-console look |
+| Look and resolution | 16-bit style at 480 × 270 widescreen | 384 × 216 (a little chunkier, less art to draw), or 8-bit at 320 × 180 |
+| Art made in | Code (pixel maps in TypeScript), so no files and no drawing tools needed | PNG sprite sheets drawn in a pixel editor such as Aseprite, if you want to draw or commission art yourself |
 | Sun Meter | On, with Relaxed mode to turn it off | Off by default, or removed |
 | Lives | 3 lives, extra life every 100 fruit | Unlimited lives with checkpoints only |
 | Worlds in v1 | 4 worlds × 3 levels + bosses | Start smaller: 2 worlds |
