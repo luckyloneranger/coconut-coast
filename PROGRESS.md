@@ -176,6 +176,8 @@
 - `ART_PROMPTS.md` has the exact frame table for Pip's sheets. The old box stand-in is gone.
 - **Tests:** 97 unit tests (14 new: palette limits, variants, Pip's sheet sizes and animations, the animation picker, ground auto-tiles, ducking) and 2 browser tests (the level, and the sprite viewer paging through every sheet).
 
+- **Fix after play-testing ("sprites during jump don't look great"):** the rise and top-of-jump frames kept both feet on the ground (they read as a squat or a lunge), and the fall raised both arms straight up (standing, arms up, with an arm over the face). Now the rise pushes off with the front knee up and the back leg trailing, the top of the jump is a tuck with the feet clear of the ground, and the fall reaches down with the arms out and the face visible. The falling bandana streams back instead of sticking up like a horn.
+
 **Known issues / notes**
 - Code-assembled art is clean and consistent, but simpler than hand-painted art. Any sheet can be replaced by an external PNG, and the viewer shows both versions.
 - Enemies, items, backgrounds and water are still Phase 4 art; they come in Phase 5b.

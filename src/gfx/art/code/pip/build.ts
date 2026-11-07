@@ -164,7 +164,7 @@ function tails(g: PixelGrid, x: number, y: number, how: 'hang' | 'flow' | 'up'):
     how === 'flow'
       ? [[-1, 0], [-2, 0], [-3, 1], [-1, 1], [-2, 2]]
       : how === 'up'
-        ? [[-1, -1], [-1, -2], [-2, -3], [0, -1], [0, -2]]
+        ? [[-1, 0], [-2, -1], [-3, -1], [-1, -1], [-2, -2]] // streaming back and up while falling
         : [[-1, 0], [-1, 1], [-1, 2], [0, 1], [0, 2]];
   for (const [dx, dy] of pts) g.set(x + dx, y + dy, dy === 0 && dx === -1 ? 'R' : 'r');
 }

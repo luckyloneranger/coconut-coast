@@ -47,13 +47,16 @@ export const PIP_ANIMS = {
   walk: { fps: 0, poses: Array.from({ length: 8 }, (_, i) => walk(i)) },
   run: { fps: 0, poses: Array.from({ length: 8 }, (_, i) => run(i)) },
   skid: { fps: 0, poses: [{ lean: -2, frontLeg: L(35, 40), backLeg: L(-10, -25), frontArm: L(-50, -30), backArm: L(-70, -40), tails: 'flow' }] as Pose[] },
-  rise: { fps: 0, poses: [{ frontLeg: L(70, -10), backLeg: L(-15, -35), frontArm: L(150, 170), backArm: L(-40, -20), tails: 'hang' }] as Pose[] },
-  apex: { fps: 0, poses: [{ frontLeg: L(55, -15), backLeg: L(20, -40), frontArm: L(100, 120), backArm: L(-100, -80) }] as Pose[] },
+  // Jumping up: pushing off, the front knee driving up, the back leg trailing, the near arm reaching up in front of the face.
+  rise: { fps: 0, poses: [{ lean: 2, frontLeg: L(75, 15), backLeg: L(-20, -40), frontArm: L(135, 155), backArm: L(-50, -30), tails: 'hang' }] as Pose[] },
+  // The top of the jump: a tuck, knees up (the feet leave the bottom of the frame), arms out for balance.
+  apex: { fps: 0, poses: [{ frontLeg: L(80, 20), backLeg: L(45, -30), frontArm: L(80, 110), backArm: L(-80, -100), tails: 'flow' }] as Pose[] },
+  // Falling: legs reaching down and apart for the landing, arms up and out (the near one forward, clear of the face).
   fall: {
     fps: 8,
     poses: [
-      { frontLeg: L(15, 5), backLeg: L(-10, -5), frontArm: L(140, 160), backArm: L(-140, -160), tails: 'up' },
-      { frontLeg: L(10, 0), backLeg: L(-15, -10), frontArm: L(120, 140), backArm: L(-120, -140), tails: 'up' },
+      { frontLeg: L(20, 30), backLeg: L(-25, -10), frontArm: L(115, 135), backArm: L(-125, -145), tails: 'up' },
+      { frontLeg: L(15, 20), backLeg: L(-20, -5), frontArm: L(105, 125), backArm: L(-115, -135), tails: 'up' },
     ] as Pose[],
   },
   land: { fps: 0, poses: [{ crouch: 3, frontLeg: L(10, 10), backLeg: L(-10, -10), frontArm: L(40, 60), backArm: L(-40, -20) }] as Pose[] },
