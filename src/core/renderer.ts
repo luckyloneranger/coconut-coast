@@ -71,6 +71,17 @@ export class Renderer {
     this.ctx.restore();
   }
 
+  /** One frame of a sheet drawn `scale` times bigger (the sprite viewer). */
+  spriteScaled(sheet: SpriteSheet, frame: number, x: number, y: number, scale: number): void {
+    const f = ((frame % sheet.frames) + sheet.frames) % sheet.frames;
+    this.ctx.drawImage(sheet.image, f * sheet.frameW, 0, sheet.frameW, sheet.frameH, Math.round(x), Math.round(y), sheet.frameW * scale, sheet.frameH * scale);
+  }
+
+  /** A pre-drawn picture (a tile) at its natural size, optionally scaled up. */
+  image(img: HTMLCanvasElement, x: number, y: number, scale = 1): void {
+    this.ctx.drawImage(img, Math.round(x), Math.round(y), img.width * scale, img.height * scale);
+  }
+
   /** Text in the 8x8 bitmap font. */
   text(str: string, x: number, y: number, colour: string, align: TextAlign = 'left', scale = 1): void {
     const font = this.fontImage(colour);

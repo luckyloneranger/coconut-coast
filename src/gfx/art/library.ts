@@ -5,6 +5,7 @@
 import { ART } from '../../game/tuning';
 import { ASSETS, ASSET_IDS, sheetFits, type AssetId } from './assets';
 import { keyOutMagenta, mapPixels } from './pixels';
+import { framesInVariant, type Variant } from './palettes';
 
 export type ArtSource = 'code' | 'external';
 
@@ -34,7 +35,7 @@ export function artSourceFrom(query: string, saved: string | null): ArtSource {
 
 export class ArtLibrary {
   source: ArtSource;
-  private readonly codeSheets = new Map<AssetId, SpriteSheet>();
+  private readonly codeSheets = new Map<string, SpriteSheet>();
   private readonly externalSheets = new Map<AssetId, SpriteSheet>();
   readonly status = new Map<AssetId, ExternalStatus>();
 
@@ -50,13 +51,18 @@ export class ArtLibrary {
     return Promise.all(jobs).then(() => undefined);
   }
 
-  /** The sheet to draw for an asset right now. */
-  sheet(id: AssetId): SpriteSheet {
+  /**
+   * The sheet to draw for an asset right now. A palette `variant` (the hit
+   * flash, the Starfruit shimmer) is made from the code-drawn colours; an
+   * external sheet is shown as it is.
+   */
+  sheet(id: AssetId, variant: Variant = 'normal'): SpriteSheet {
     if (pickSource(this.source, this.status.get(id) ?? 'missing') === 'external') return this.externalSheets.get(id)!;
-    let s = this.codeSheets.get(id);
+    const key = `${id}:${variant}`;
+    let s = this.codeSheets.get(key);
     if (!s) {
-      s = buildCodeSheet(id);
-      this.codeSheets.set(id, s);
+      s = buildCodeSheet(id, variant);
+      this.codeSheets.set(key, s);
     }
     return s;
   }
@@ -95,11 +101,11 @@ function sheetSize(id: AssetId): Pick<SpriteSheet, 'frameW' | 'frameH' | 'frames
 }
 
 /** Draw every frame's pixel map side by side into one canvas. */
-function buildCodeSheet(id: AssetId): SpriteSheet {
+function buildCodeSheet(id: AssetId, variant: Variant): SpriteSheet {
   const spec = ASSETS[id];
   const canvas = newCanvas(spec.frameW * spec.frames, spec.frameH);
   const ctx = canvas.getContext('2d')!;
-  spec.code.forEach((map, i) => {
+  framesInVariant(spec.code, variant).forEach((map, i) => {
     for (const p of mapPixels(map)) {
       ctx.fillStyle = p.colour;
       ctx.fillRect(i * spec.frameW + p.x, p.y, 1, 1);

@@ -165,7 +165,7 @@ The art switch never blocks the gameplay phases. The sprite viewer (art phase) s
 - **Palette effects:** colour cycling for water shimmer, lava glow and waterfalls (the colours rotate, so the art stays still but appears to flow).
 - **See-through effects (new compared with 8-bit):** water you can see Pip through, soft light shafts in the mangrove, fog banks, glows around fire and the Starfruit, and fades between screens. Use canvas alpha sparingly and from fixed values so it stays fast.
 - **Sprites:** cleaned-up PNG sheets, or pixel maps in code (strings, one character per colour from that sprite's palette); either way built once into canvases. Shading is drawn into the maps (light from the top left, 3 to 4 shades per colour, darker outlines that pick up the colour next to them rather than flat black). No automatic outline: 16-bit sprites are shaded by hand.
-- **Pip:** 24 × 32 small, 24 × 40 Big. Animation with in-between frames: stand (with a breathing idle and a bored animation after 5 s), walk (8), run (8, leaning forward), skid, jump rising, the turn at the top of a jump, fall, land squash, duck, look up, throw, hurt, victory, and a death spin. Pip's look is original: a satchel, a sun-shaped badge, a short bandana. No cap, no overalls, no grass skirt.
+- **Pip:** 24 × 32 small, 24 × 40 Big (Phase 5: drawn in code from a hand-drawn head and shaded body parts placed by a pose table; Big Pip has a longer body, not a stretched copy; Sling Pip holds the slingshot). Animation with in-between frames: stand (with a breathing idle and a bored animation after 5 s), walk (8), run (8, leaning forward), skid, jump rising, the turn at the top of a jump, fall, land squash, duck, look up, throw, hurt, victory, and a death spin. Pip's look is original: a satchel, a sun-shaped badge, a short bandana. No cap, no overalls, no grass skirt.
 - **Enemies and bosses:** 24 to 32 px enemies with 4 to 8 frames each; bosses up to 96 × 96, built from several parts that move separately (a crab's claws, a golem's arms).
 - **Backgrounds:** 4 to 5 parallax layers per world (sky gradient, far clouds or mountains, mid islands, near foliage, and a foreground layer that passes in front of Pip now and then). Some layers move on their own: drifting clouds, swaying palms, rolling waves, falling ash.
 - **Lighting and weather:** time of day per level (dawn, day, sunset, night) by swapping palettes; fireflies and glowing mushrooms at night; rain and wind in Cloud Reef.
@@ -283,6 +283,9 @@ Every decision has a default, so work can start straight away. Change any of the
 | Enemies after a death | All come back to their starting places (decided in Phase 3) | Defeated enemies stay gone |
 | Sun Meter speed | A full meter lasts 45 s; each fruit refills an eighth (decided in Phase 4) | Any values in `RUN` in `tuning.ts` |
 | Game over before the world map exists | The level starts again with 3 lives (Phase 4, until Phase 8) | — |
+| Ducking | Down on the ground ducks: the collision box gets shorter (Big Pip fits under 2-tile gaps) and Pip can't walk while ducked (decided in Phase 5) | Pose only |
+| Look up | Not a control, because Up is also Jump on the keyboard; the frame is kept for cutscenes (decided in Phase 5) | — |
+| Cleanup tool for generated images | A page in the game (`?art-tool=1`), built in Phase 5b | — |
 | Hero | Pip, a young island courier | Your own character idea |
 | Look and resolution | 16-bit style at 480 × 270 widescreen | 384 × 216 (a little chunkier, less art to draw), or 8-bit at 320 × 180 |
 | Art made in | **Decided:** drawn in code by default; external PNG sprites as an option, per asset (the user is trying an AI image generator with `ART_PROMPTS.md`) | Hand-drawn sheets from a pixel editor such as Aseprite |

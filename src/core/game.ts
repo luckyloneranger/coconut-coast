@@ -7,6 +7,7 @@ import { SceneManager } from './scene';
 import { loadSetting, saveSetting } from './settings';
 import { ArtLibrary, artSourceFrom } from '../gfx/art/library';
 import { LevelScene } from '../scenes/level-scene';
+import { SpriteViewerScene } from '../scenes/sprite-viewer';
 import { TEST_LEVEL } from '../world/levels/test-level';
 import { UI } from '../gfx/palette';
 
@@ -25,13 +26,18 @@ export class Game {
     attachKeyboard(this.input);
     this.art = new ArtLibrary(artSourceFrom(location.search, loadSetting('art')), externalFiles);
     void this.art.loadExternal(import.meta.env.BASE_URL);
+    const query = new URLSearchParams(location.search);
+    if (query.get('sprites') === '1') {
+      this.scenes.push(new SpriteViewerScene(this.art, () => this.toggleArt()));
+      return;
+    }
     this.scenes.push(
       new LevelScene(TEST_LEVEL, this.art, () => this.toggleArt(), {
         viewW: this.renderer.width,
         viewH: this.renderer.height,
         debugOpen: () => this.debug.visible,
         // Relaxed mode (no Sun Meter) until the Options screen exists: ?relaxed=1
-        relaxed: new URLSearchParams(location.search).get('relaxed') === '1',
+        relaxed: query.get('relaxed') === '1',
       }),
     );
   }

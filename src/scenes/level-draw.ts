@@ -2,26 +2,17 @@
 // GAME OVER card. Reads the scene's state; changes nothing.
 
 import type { Renderer } from '../core/renderer';
-import { ITEM_FRAME } from '../actors/items';
-import type { PipPose } from '../actors/pip-physics';
-import { HERO_FRAME } from '../gfx/art/assets';
+import { BEACH_TILE } from '../gfx/art/code/tiles-beach';
+import { GroundTiles } from '../gfx/art/ground-tiles';
+import type { Variant } from '../gfx/art/palettes';
 import { UI } from '../gfx/palette';
-import { FORMS, PIP } from '../game/tuning';
+import { FORMS } from '../game/tuning';
 import { TILE } from '../world/tiles';
 import { drawHud } from '../ui/hud';
 import type { LevelScene } from './level-scene';
 
-const PLANK = '#a8683a';
-const PLANK_LIGHT = '#d8985a';
-const CORAL = '#f06a8a';
-const CORAL_LIGHT = '#ffb0c4';
-const STONE = '#9a96a8';
-const STONE_DARK = '#5e5a6e';
-const USED = '#7a5a3a';
-const USED_DARK = '#4a3424';
 const SEED = '#6a3a1a';
-const SLING_BAND = '#3ec060';
-const STAR_GLOW = '#fff2a0';
+const ground = new GroundTiles();
 const POLE_H = 3 * TILE; // px, checkpoint post height
 
 export function drawLevel(r: Renderer, s: LevelScene): void {
@@ -54,24 +45,15 @@ function drawPip(r: Renderer, s: LevelScene, cx: number, cy: number): void {
   const p = s.pip;
   const f = s.form;
   // Blinking after a hit (and while debug-invincible): skip every other moment.
-  const blinking = f.blink > 0 || s.invincible;
-  if (blinking && Math.floor(s.time * 12) % 2 === 0) return;
-  const sheet = s.art.sheet(p.h > PIP.HEIGHT ? 'heroBig' : 'hero');
+  if ((f.blink > 0 || s.invincible) && !s.anim.flashing && Math.floor(s.time * 12) % 2 === 0) return;
+  // The white flash on a hit; the Starfruit shimmer (slower as it runs out).
+  let variant: Variant = 'normal';
+  if (s.anim.flashing) variant = 'flash';
+  else if (f.star > 0) variant = Math.floor(s.time * (f.star < FORMS.STARFRUIT_ENDING ? 6 : 16)) % 2 ? 'starA' : 'starB';
+  const sheet = s.art.sheet(f.canThrow ? 'pipSling' : f.big ? 'pipBig' : 'pip', variant);
   const x = p.feetX - sheet.frameW / 2 - cx;
   const y = p.feetY - sheet.frameH - cy;
-  if (f.star > 0) {
-    // Starfruit: a flickering glow, slowing down as it runs out.
-    const rate = f.star < FORMS.STARFRUIT_ENDING ? 6 : 16;
-    if (Math.floor(s.time * rate) % 2 === 0) r.rect(x + 1, y + 1, sheet.frameW - 2, sheet.frameH - 1, STAR_GLOW);
-  }
-  const frame = s.dying > 0 ? HERO_FRAME.rise : frameFor(s, p.pose);
-  r.sprite(sheet, frame, x, y, p.facingLeft, s.dying > 0);
-  if (f.canThrow && s.dying <= 0) r.rect(x + 4, y + Math.round(sheet.frameH * 0.55), sheet.frameW - 8, 2, SLING_BAND);
-}
-
-function frameFor(s: LevelScene, pose: PipPose): number {
-  if (pose === 'walk' || pose === 'run') return Math.floor(s.pip.stride / PIP.STRIDE) % 2 ? HERO_FRAME.step : HERO_FRAME.stand;
-  return HERO_FRAME[pose];
+  r.sprite(sheet, s.anim.frame(s.animState), x, y, p.facingLeft, s.dying > 0);
 }
 
 function drawItems(r: Renderer, s: LevelScene, cx: number, cy: number): void {
@@ -98,53 +80,58 @@ function drawEnemies(r: Renderer, s: LevelScene, cx: number, cy: number): void {
   }
 }
 
-/** Only the tiles on screen. */
+/** Only the tiles on screen. Ground is auto-tiled from its neighbours. */
 function drawTiles(r: Renderer, s: LevelScene, cx: number, cy: number): void {
   const L = s.level;
-  const items = s.art.sheet('items');
+  const sheet = s.art.sheet('tilesBeach');
+  const isGround = (tx: number, ty: number) => L.tileAt(tx, ty) === 'ground' || ty >= L.rowsCount; // the ground carries on below the level
+  const isPlank = (tx: number, ty: number) => L.tileAt(tx, ty) === 'oneway';
   const tx0 = Math.floor(cx / TILE);
   const ty0 = Math.floor(cy / TILE);
   for (let ty = ty0; ty <= ty0 + Math.ceil(r.height / TILE); ty++) {
     for (let tx = tx0; tx <= tx0 + Math.ceil(r.width / TILE); tx++) {
       if (tx < 0 || tx >= L.cols) continue;
-      const t = L.tileAt(tx, ty);
       const x = tx * TILE - cx;
       const y = ty * TILE - cy;
-      switch (t) {
-        case 'air':
+      switch (L.tileAt(tx, ty)) {
+        case 'ground':
+          r.image(
+            ground.get(
+              {
+                n: isGround(tx, ty - 1),
+                e: isGround(tx + 1, ty) || tx + 1 >= L.cols,
+                s: isGround(tx, ty + 1),
+                w: isGround(tx - 1, ty) || tx === 0,
+                nw: isGround(tx - 1, ty - 1),
+                ne: isGround(tx + 1, ty - 1),
+              },
+              tx,
+              ty,
+            ),
+            x,
+            y,
+          );
           break;
-        case 'oneway':
-          r.rect(x, y, TILE, 5, PLANK);
-          r.rect(x, y, TILE, 1, PLANK_LIGHT);
-          r.rect(x + 2, y + 5, 2, 3, PLANK); // little supports
-          r.rect(x + TILE - 4, y + 5, 2, 3, PLANK);
+        case 'oneway': {
+          const left = isPlank(tx - 1, ty);
+          const right = isPlank(tx + 1, ty);
+          const piece = left && right ? 'plankMid' : left ? 'plankRight' : right ? 'plankLeft' : 'plankOne';
+          r.sprite(sheet, BEACH_TILE[piece], x, y);
           break;
+        }
         case 'spikes':
-          for (let i = 0; i < 3; i++) {
-            const px = x + 2 + i * 4;
-            for (let h = 0; h < 10; h++) r.rect(px + Math.floor(h / 3), y + TILE - 1 - h, Math.max(1, 4 - Math.floor((2 * h) / 3)), 1, h > 6 ? CORAL_LIGHT : CORAL);
-          }
+          r.sprite(sheet, BEACH_TILE.spikes, x, y);
           break;
         case 'crate':
-          r.sprite(items, ITEM_FRAME.crate, x, y);
+          r.sprite(sheet, BEACH_TILE.crate, x, y);
           break;
         case 'used':
-          r.rect(x, y, TILE, TILE, USED_DARK);
-          r.rect(x + 1, y + 1, TILE - 2, TILE - 2, USED);
+          r.sprite(sheet, BEACH_TILE.used, x, y);
           break;
         case 'cracked':
-          r.rect(x, y, TILE, TILE, STONE);
-          r.rect(x, y + TILE - 2, TILE, 2, STONE_DARK);
-          r.rect(x + 4, y + 2, 1, 5, STONE_DARK); // the cracks
-          r.rect(x + 5, y + 7, 4, 1, STONE_DARK);
-          r.rect(x + 9, y + 7, 1, 6, STONE_DARK);
+          r.sprite(sheet, BEACH_TILE.cracked, x, y);
           break;
-        case 'ground':
-          r.rect(x, y, TILE, TILE, UI.SAND);
-          if (L.tileAt(tx, ty - 1) !== 'ground') {
-            r.rect(x, y, TILE, 4, UI.GRASS);
-            r.rect(x, y + 4, TILE, 2, UI.GRASS_DARK);
-          }
+        case 'air':
           break;
       }
     }

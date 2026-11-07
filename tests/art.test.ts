@@ -30,7 +30,7 @@ describe('external art', () => {
     expect(pickSource('code', 'ready')).toBe('code');
   });
   it('a sheet must match the frame grid exactly', () => {
-    const hero = ASSETS.hero;
+    const hero = ASSETS.pip;
     expect(sheetFits(hero, hero.frameW * hero.frames, hero.frameH)).toBe(true);
     expect(sheetFits(hero, 1024, 1024)).toBe(false);
   });

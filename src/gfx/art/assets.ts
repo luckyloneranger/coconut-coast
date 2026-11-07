@@ -3,7 +3,8 @@
 // same name. An external sheet must have the same frame size and count.
 
 import type { PixelMap } from './pixels';
-import { HERO_BIG_FRAMES, HERO_FRAMES } from './code/hero';
+import { PIP_BIG_FRAMES, PIP_FRAME_COUNT, PIP_SLING_FRAMES, PIP_SMALL_FRAMES } from './code/pip';
+import { BEACH_TILES } from './code/tiles-beach';
 import { ITEM_ICONS } from './code/items';
 import { CRAB_FRAMES, GULL_FRAMES, URCHIN_FRAMES } from './code/enemies';
 
@@ -18,17 +19,16 @@ export interface AssetSpec {
 }
 
 export const ASSETS = {
-  // A stand-in box for Pip until the art pass. Frames in HERO_FRAME order.
-  hero: { file: 'hero.png', frameW: 24, frameH: 32, frames: 6, code: HERO_FRAMES },
-  heroBig: { file: 'pip-big.png', frameW: 24, frameH: 40, frames: 6, code: HERO_BIG_FRAMES },
+  // Pip: every animation in one row, in the order of PIP_FRAMES (see ART_PROMPTS.md for the table).
+  pip: { file: 'pip.png', frameW: 24, frameH: 32, frames: PIP_FRAME_COUNT, code: PIP_SMALL_FRAMES },
+  pipBig: { file: 'pip-big.png', frameW: 24, frameH: 40, frames: PIP_FRAME_COUNT, code: PIP_BIG_FRAMES },
+  pipSling: { file: 'pip-sling.png', frameW: 24, frameH: 40, frames: PIP_FRAME_COUNT, code: PIP_SLING_FRAMES },
+  tilesBeach: { file: 'tiles-beach.png', frameW: 16, frameH: 16, frames: 8, code: BEACH_TILES },
   items: { file: 'items.png', frameW: 16, frameH: 16, frames: 8, code: ITEM_ICONS },
   crab: { file: 'enemy-crab.png', frameW: 24, frameH: 16, frames: 4, code: CRAB_FRAMES },
   urchin: { file: 'enemy-urchin.png', frameW: 16, frameH: 16, frames: 4, code: URCHIN_FRAMES },
   gull: { file: 'enemy-gull.png', frameW: 24, frameH: 20, frames: 4, code: GULL_FRAMES },
 } satisfies Record<string, AssetSpec>;
-
-/** Where each picture sits in the hero sheet (left to right). */
-export const HERO_FRAME = { stand: 0, step: 1, rise: 2, fall: 3, skid: 4, land: 5 } as const;
 
 export type AssetId = keyof typeof ASSETS;
 export const ASSET_IDS = Object.keys(ASSETS) as AssetId[];

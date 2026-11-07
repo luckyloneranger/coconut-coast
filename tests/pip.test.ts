@@ -219,3 +219,23 @@ describe('approach', () => {
     expect(approach(5, -5, 20)).toBe(-5);
   });
 });
+
+describe('ducking', () => {
+  it('Down on the ground ducks: no walking, slides to a stop', () => {
+    const p = standing();
+    run(p, 0.5, { right: true });
+    run(p, 0.3, { right: true, down: true });
+    expect(p.ducking).toBe(true);
+    expect(p.vx).toBe(0);
+    run(p, 0.1, { right: true });
+    expect(p.ducking).toBe(false);
+    expect(p.vx).toBeGreaterThan(0);
+  });
+
+  it('stays ducked under a low ceiling until there is room', () => {
+    const p = standing();
+    p.forceDuck = true;
+    p.update(DT, NO_CONTROLS, FLOOR);
+    expect(p.ducking).toBe(true);
+  });
+});

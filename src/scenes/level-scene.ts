@@ -12,6 +12,7 @@ import { makeEnemy } from '../actors/enemies';
 import { Item, crateContents, placedItems } from '../actors/items';
 import { PipForm } from '../actors/pip-form';
 import { PipPhysics } from '../actors/pip-physics';
+import { PipAnimator } from '../actors/pip-anim';
 import { SeedPod, canFire } from '../actors/seed-pod';
 import { overlaps } from '../actors/solids';
 import type { ArtLibrary } from '../gfx/art/library';
@@ -40,6 +41,7 @@ export class LevelScene implements Scene {
   level!: Level;
   readonly pip = new PipPhysics(0, 0);
   readonly form = new PipForm();
+  readonly anim = new PipAnimator();
   run!: RunState;
   camera!: Camera;
   enemies: Enemy[] = [];
@@ -129,8 +131,12 @@ export class LevelScene implements Scene {
     const near = this.level.boxesNear(p.box);
     p.update(dt, controls, near.solids, near.oneWays);
     // Grow or shrink to match the form (growing waits for room above).
-    const wantH = this.form.big ? PIP.BIG_HEIGHT : PIP.HEIGHT;
+    // Height follows the form and ducking; standing up (or growing) waits for room above.
+    const standH = this.form.big ? PIP.BIG_HEIGHT : PIP.HEIGHT;
+    const duckH = this.form.big ? PIP.BIG_DUCK_HEIGHT : PIP.DUCK_HEIGHT;
+    const wantH = controls.down && p.onGround ? duckH : standH;
     if (p.h !== wantH) p.setHeight(wantH, this.level.boxesNear(p.box).solids);
+    p.forceDuck = p.onGround && p.h < standH && !controls.down;
     this.hitBlocks();
     if (p.y > this.level.heightPx + LEVEL.FALL_BELOW) {
       this.die(); // fell in a pit
@@ -138,6 +144,7 @@ export class LevelScene implements Scene {
     }
     if (p.onGround) this.run.landed();
     if (this.form.canThrow && input.justPressed('THROW') && canFire(this.pods)) {
+      this.anim.throwNow();
       this.pods.push(new SeedPod(p.feetX, p.y + p.h * 0.5, p.facingLeft));
     }
     this.updatePods(dt);
@@ -156,6 +163,28 @@ export class LevelScene implements Scene {
     const flag = this.level.flag;
     if (flag && !this.finished && Math.abs(p.feetX - flag.x) < FLAG_REACH && p.feetY > flag.y - 4 * TILE) this.finished = true;
     this.camera.update(dt, p);
+    this.animate(dt);
+  }
+
+  /** Feed Pip's state to the animation picker. */
+  private animate(dt: number): void {
+    this.anim.update(dt, this.animState);
+  }
+
+  /** What the animation picker needs (also used when drawing). */
+  get animState() {
+    const p = this.pip;
+    return {
+      onGround: p.onGround,
+      vx: p.vx,
+      vy: p.vy,
+      skidding: p.skidding,
+      ducking: p.ducking,
+      sinceLanding: p.sinceLanding,
+      stride: p.stride,
+      dying: this.dying > 0,
+      won: this.finished,
+    };
   }
 
   /** Crates and cracked stone react to a head-butt; Big Pip landing hard on a crate opens it too. */
@@ -218,9 +247,13 @@ export class LevelScene implements Scene {
       } else if (this.form.star > 0) {
         e.stomp(COMBAT.SQUASH_TIME); // Starfruit: anything touched is defeated
         this.run.score += RUN.STOMP_CHAIN[0];
-      } else if (!this.invincible && this.form.hit() === 'dead') {
-        this.die();
-        return;
+      } else if (!this.invincible) {
+        const result = this.form.hit();
+        if (result === 'shrunk') this.anim.hurtNow();
+        if (result === 'dead') {
+          this.die();
+          return;
+        }
       }
     }
     if (bounced) p.bounce(jumpHeld);
@@ -273,6 +306,7 @@ export class LevelScene implements Scene {
     p.vy += COMBAT.DEATH_GRAVITY * dt;
     p.y += p.vy * dt;
     this.dying -= dt;
+    this.anim.update(dt, this.animState);
     if (this.dying <= 0) this.comeBack();
   }
 
@@ -307,7 +341,8 @@ export class LevelScene implements Scene {
       `X ${p.x.toFixed(1)}`,
       `Y ${p.y.toFixed(1)}`,
       `ART ${this.art.source}`,
-      `HERO ${this.art.sheet('hero').from}`,
+      `HERO ${this.art.sheet('pip').from}`,
+      `ANIM ${this.anim.anim}`,
       `CAM ${this.camera.x.toFixed(0)} ${this.camera.y.toFixed(0)}`,
       `VX ${p.vx.toFixed(0)} VY ${p.vy.toFixed(0)}`,
       `POSE ${p.pose}${p.onGround ? ' GROUND' : ''}`,

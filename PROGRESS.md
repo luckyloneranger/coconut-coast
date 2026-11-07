@@ -158,3 +158,27 @@
 - `ITEMS.BIG_STOMP_SPEED`: how hard Big Pip must land to open a crate.
 
 **Next:** Phase 5, art pass part 1 (palette system, sprite viewer, Pip's real animation set, Palm Beach tiles with auto-tiling).
+
+## Phase 5 – Art pass, part 1
+
+**Done**
+- **Palette system** (`gfx/art/palettes.ts`): every sprite has at most 16 colours (checked by a test), and outlines are never pure black. Whole-sheet palette swaps give the white hit flash and the gold/cyan Starfruit shimmer, which replace the old glow box.
+- **Pip's real look** (an original design: courier with a satchel, a sun badge, a short orange bandana, a blue vest, khaki shorts and red sneakers):
+  - A hand-drawn head with a blink frame, plus shaded body parts placed by a pose table (`gfx/art/code/pip/`).
+  - 37 frames: idle 4, bored 4, walk 8, run 8, skid, rise, the turn at the top, fall 2, land, duck, throw 2, hurt, victory 2, death.
+  - Three sheets: small (24 × 32), Big (24 × 40, longer body) and Sling (Big with the slingshot in hand).
+- **Animation picker** (`actors/pip-anim.ts`): walk and run go by distance, so feet don't slide. Bored starts after 5 s. The jump-peak frame shows below 70 px/s; throw and hurt show briefly; victory at the flag; the death frame during the spin.
+- **Ducking:** Down on the ground ducks. Pip can't walk ducked, and the box shrinks (20 px small, 26 px Big, so Big Pip fits under a 2-tile gap). Pip stays ducked under a low ceiling until there's room.
+- **Palm Beach tiles:**
+  - Auto-tiled ground: grass tops with blades, lit left edges, shaded right edges and undersides, rounded corners, shadowed inner corners, and 4 sand variations.
+  - A tile sheet (`tiles-beach.png`, 8 tiles): crate, empty crate, cracked stone, coral spikes, and plank ends.
+- **Sprite viewer** (`?sprites=1`): every sheet with an animation preview at 3×, all frames at 2×, the palette, and whether it shows code or external art, plus a ground page demonstrating the auto-tiles.
+- `ART_PROMPTS.md` has the exact frame table for Pip's sheets. The old box stand-in is gone.
+- **Tests:** 97 unit tests (14 new: palette limits, variants, Pip's sheet sizes and animations, the animation picker, ground auto-tiles, ducking) and 2 browser tests (the level, and the sprite viewer paging through every sheet).
+
+**Known issues / notes**
+- Code-assembled art is clean and consistent, but simpler than hand-painted art. Any sheet can be replaced by an external PNG, and the viewer shows both versions.
+- Enemies, items, backgrounds and water are still Phase 4 art; they come in Phase 5b.
+- Ground tiles are code-only for now. An external tile layout comes with the cleanup tool in Phase 5b.
+
+**Next:** Phase 5b, art pass part 2 (parallax backgrounds, colour cycling, see-through water, particles, enemy sprites, and the cleanup tool for generated images).

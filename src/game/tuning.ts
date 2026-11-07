@@ -24,6 +24,8 @@ export const PIP = {
   WIDTH: 16, // px, collision box (the sprite is 24 x 32 and drawn centred on it)
   HEIGHT: 28, // px
   BIG_HEIGHT: 36, // px when Big (the sprite is 24 x 40)
+  DUCK_HEIGHT: 20, // px while ducking (small)
+  BIG_DUCK_HEIGHT: 26, // px while ducking (Big): fits under a 2-tile gap
   WALK_SPEED: 100, // top speed walking
   RUN_SPEED: 180, // top speed with Run held
   ACCEL: 600, // speeding up to walking speed (0 -> 100 in about 0.17 s)
@@ -48,6 +50,17 @@ export const PIP = {
   DROP_THROUGH_TIME: 0.25, // s that one-way platforms let you fall through after Down + Jump
   LAND_SQUASH_TIME: 0.08, // s the landing squash shows
   STRIDE: 14, // px travelled per walk frame
+};
+
+/** Pip's animation. */
+export const ANIM = {
+  BORED_AFTER: 5, // s standing still before the bored animation starts
+  WALK_STRIDE: 6, // px travelled per walk frame
+  RUN_STRIDE: 9, // px travelled per run frame
+  APEX_SPEED: 70, // px/s: rising or falling slower than this shows the turn at the top of a jump
+  THROW_TIME: 0.2, // s the throw poses show after firing a pod
+  HURT_TIME: 0.4, // s the hurt pose shows after a hit
+  FLASH_TIME: 0.12, // s of white flash when hit
 };
 
 /** The camera. Positions in px from the top-left of the screen. */

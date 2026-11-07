@@ -71,6 +71,33 @@ Ask for a wide image (16:9 or wider). These are layers that scroll at different 
 | `boss-shelly.png` | A giant hermit crab boss living in a huge spiral seashell decorated with barnacles and seaweed, angry eyes, one oversized claw, about 96 × 80 pixels. 3 poses in a row: standing, charging with claw forward, hiding inside the shell. |
 | `boss-gale.png` | An original villain: a stout, scheming storm-bird captain with ruffled grey feathers, a long blue coat with gold buttons, a tricorn hat with a lightning-bolt feather, standing on the deck rail of a small wooden airship. About 64 × 64 pixels. 3 poses: standing, flapping and laughing, swooping down. |
 
+## Pip's sheets in the game (for lining up generated frames)
+
+The game's Pip sheets are one row of 37 frames each, in this order (frame numbers start at 0):
+
+| Frames | Animation |
+| --- | --- |
+| 0-3 | idle (breathing, blink on the last) |
+| 4-7 | bored (foot tap, a yawn and stretch) |
+| 8-15 | walk |
+| 16-23 | run |
+| 24 | skid |
+| 25 | rise (jumping up) |
+| 26 | the turn at the top of a jump |
+| 27-28 | fall |
+| 29 | land (squash) |
+| 30 | duck |
+| 31-32 | throw (wind-up, release) |
+| 33 | hurt |
+| 34-35 | victory |
+| 36 | death |
+
+- `pip.png`: small Pip, 24 × 32 per frame (888 × 32 in all).
+- `pip-big.png`: Big Pip, 24 × 40 (888 × 40).
+- `pip-sling.png`: Big Pip holding the slingshot, 24 × 40.
+
+Any frame you don't have yet can be copied from the nearest one. The sprite viewer (`?sprites=1`) shows the code-drawn version of every frame to compare against.
+
 ## What to send back
 
 The game already has a switch for this: art drawn in code is the default, and external PNGs in `public/art/` replace it asset by asset (press T in the game, or add `?art=external` to the address).

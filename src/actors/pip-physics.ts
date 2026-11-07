@@ -27,6 +27,10 @@ export class PipPhysics {
   private rising = false;
   /** s left of falling through one-way platforms (after Down + Jump). */
   dropping = 0;
+  /** Crouched low (Down on the ground): can't walk, and the scene makes the collision box shorter. */
+  ducking = false;
+  /** Set by the scene when there's no room to stand up: stay ducked even with Down let go. */
+  forceDuck = false;
 
   constructor(x: number, y: number) {
     this.x = x;
@@ -69,6 +73,7 @@ export class PipPhysics {
     this.dropping = Math.max(0, this.dropping - dt);
     this.bumped = [];
     this.landedOn = null;
+    this.ducking = this.onGround && (c.down || this.forceDuck);
     this.steer(dt, c);
     this.jump(dt, c, solids, oneWays);
     this.fall(dt, c);
@@ -80,7 +85,8 @@ export class PipPhysics {
 
   /** Speed up, slow down or skid along the ground. In the air, speeding up is weaker but braking isn't. */
   private steer(dt: number, c: PipControls): void {
-    const dir = (c.right ? 1 : 0) - (c.left ? 1 : 0);
+    // Ducking on the ground: no walking, just slide to a stop.
+    const dir = this.ducking ? 0 : (c.right ? 1 : 0) - (c.left ? 1 : 0);
     const grip = this.onGround ? 1 : PIP.AIR_CONTROL;
     const brake = this.onGround ? 1 : PIP.AIR_BRAKE;
     const top = c.run ? PIP.RUN_SPEED : PIP.WALK_SPEED;
