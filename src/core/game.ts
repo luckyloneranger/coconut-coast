@@ -10,6 +10,7 @@ import { LevelScene } from '../scenes/level-scene';
 import { SpriteViewerScene } from '../scenes/sprite-viewer';
 import { TEST_LEVEL } from '../world/levels/test-level';
 import { UI } from '../gfx/palette';
+import { AudioSystem } from '../audio/audio-system';
 
 /** Owns the loop, input, renderer, art and scenes. */
 export class Game {
@@ -19,11 +20,16 @@ export class Game {
   readonly art: ArtLibrary;
   readonly debug = new DebugOverlay(location.search);
   private readonly pads = new GamepadPoller();
+  readonly audio = new AudioSystem();
   private lastFrameMs = -1;
 
   constructor(canvas: HTMLCanvasElement, externalFiles: readonly string[]) {
     this.renderer = new Renderer(canvas);
     attachKeyboard(this.input);
+    // Browsers only allow sound after the player presses something: unlock on the first key or tap.
+    const unlock = () => this.audio.unlock();
+    window.addEventListener('keydown', unlock);
+    window.addEventListener('pointerdown', unlock);
     this.art = new ArtLibrary(artSourceFrom(location.search, loadSetting('art')), externalFiles);
     void this.art.loadExternal(import.meta.env.BASE_URL);
     const query = new URLSearchParams(location.search);
@@ -40,6 +46,7 @@ export class Game {
         relaxed: query.get('relaxed') === '1',
         // Calm mode (less shake and flashing) until the Options screen exists: ?calm=1
         calm: query.get('calm') === '1',
+        sound: (e) => this.audio.sfx(e),
       }),
     );
   }
@@ -55,10 +62,17 @@ export class Game {
   }
 
   private update(dt: number): void {
-    this.pads.poll(connectedPads(), (c) => this.input.keyDown(c), (c) => this.input.keyUp(c));
+    if (this.pads.poll(connectedPads(), (c) => this.input.keyDown(c), (c) => this.input.keyUp(c))) this.audio.unlock();
     this.input.beginStep();
     if (this.input.justPressed('DEBUG')) this.debug.visible = !this.debug.visible;
-    this.scenes.top?.update(dt, this.input);
+    if (this.input.justPressed('MUTE')) this.audio.toggleMute();
+    const scene = this.scenes.top;
+    scene?.update(dt, this.input);
+    // The scene says which music (and ambience) it wants; the audio system follows.
+    const level = scene instanceof LevelScene ? scene : null;
+    this.audio.setSong(level ? level.song : null);
+    this.audio.setWaves(!!level);
+    this.audio.tick();
   }
 
   private render(nowMs: number): void {
@@ -68,6 +82,7 @@ export class Game {
     r.clear(UI.BLACK);
     this.scenes.top?.render(r);
     this.debug.render(r, [`FPS ${this.debug.fps.fps}`, `SCALE ${r.scale.toFixed(2)}`, ...(this.scenes.top?.debugLines?.() ?? [])]);
+    if (this.audio.settings.muted) r.text('MUTED (M)', r.width - 6, r.height - 12, UI.WHITE, 'right');
     r.present();
   }
 }

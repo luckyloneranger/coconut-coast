@@ -19,6 +19,8 @@ import type { ArtLibrary } from '../gfx/art/library';
 import { RunState } from '../game/run-state';
 import { COMBAT, FX, ITEMS, LEVEL, PIP, RUN, WATER } from '../game/tuning';
 import { Particles } from '../gfx/fx/particles';
+import { SILENT, type SoundSink } from '../audio/sfx';
+import type { SongName } from '../audio/songs';
 import { Camera } from '../world/camera';
 import { Level, type LevelSource, type Spot } from '../world/level';
 import { TILE } from '../world/tiles';
@@ -37,6 +39,8 @@ export interface LevelOptions {
   relaxed?: boolean;
   /** Less screen shake and flashing (Options later; ?calm=1 for now). */
   calm?: boolean;
+  /** Where sound events go (the audio system); silent in tests. */
+  sound?: SoundSink;
 }
 
 /** A faint copy of Pip left behind when running fast. */
@@ -87,6 +91,8 @@ export class LevelScene implements Scene {
   private wasOnGround = false;
   private fallSpeed = 0;
   readonly calm: boolean;
+  private readonly sound: SoundSink;
+  private sunWarned = false;
   private readonly viewW: number;
   private readonly viewH: number;
   private readonly debugOpen: () => boolean;
@@ -103,6 +109,7 @@ export class LevelScene implements Scene {
     this.debugOpen = opts.debugOpen ?? (() => false);
     this.relaxed = opts.relaxed ?? false;
     this.calm = opts.calm ?? false;
+    this.sound = opts.sound ?? SILENT;
     this.restartLevel();
   }
 
@@ -179,6 +186,7 @@ export class LevelScene implements Scene {
     if (this.level.waterAt(p.feetX, p.feetY - WATER.SINK)) {
       // Into the sea: a big splash at the surface, and a life lost.
       this.particles.splash(p.feetX, Math.floor((p.feetY - WATER.SINK) / TILE) * TILE);
+      this.sound({ kind: 'splash' });
       this.die();
       return;
     }
@@ -186,6 +194,7 @@ export class LevelScene implements Scene {
     if (p.onGround) this.run.landed();
     if (this.form.canThrow && input.justPressed('THROW') && canFire(this.pods)) {
       this.anim.throwNow();
+      this.sound({ kind: 'throw' });
       this.pods.push(new SeedPod(p.feetX, p.y + p.h * 0.5, p.facingLeft));
     }
     this.updatePods(dt);
@@ -204,6 +213,7 @@ export class LevelScene implements Scene {
     this.passCheckpoints();
     const flag = this.level.flag;
     if (flag && !this.finished && Math.abs(p.feetX - flag.x) < FLAG_REACH && p.feetY > flag.y - 4 * TILE) this.finished = true;
+    this.soundCues();
     this.camera.update(dt, p);
     this.animate(dt);
     this.trackAfterImages(dt);
@@ -211,6 +221,27 @@ export class LevelScene implements Scene {
   }
 
   /** Dust when skidding, and when landing hard. */
+  /** Jumps, the low-Sun warning and extra lives, worked out from what changed this step. */
+  private lastLives = 0;
+  private soundCues(): void {
+    const p = this.pip;
+    if (this.wasOnGround && !p.onGround && p.vy < -150) this.sound({ kind: 'jump', big: this.form.big });
+    const low = !this.relaxed && this.run.sun < RUN.SUN_LOW;
+    if (low && !this.sunWarned) this.sound({ kind: 'sunLow' });
+    this.sunWarned = low;
+    if (this.lastLives && this.run.lives > this.lastLives) this.sound({ kind: 'extraLife' });
+    this.lastLives = this.run.lives;
+  }
+
+  /** The music for this moment: the Starfruit theme while invincible, jingles at the end, otherwise the level's tune. */
+  get song(): SongName | null {
+    if (this.gameOver > 0) return 'gameOver';
+    if (this.dying > 0) return 'loseLife';
+    if (this.finished) return 'levelClear';
+    if (this.form.star > 0) return 'starfruit';
+    return 'palmBeach';
+  }
+
   private kickDust(dt: number): void {
     const p = this.pip;
     this.dustTimer -= dt;
@@ -283,6 +314,7 @@ export class LevelScene implements Scene {
       const tile = this.level.tileAt(tx, ty);
       if (tile === 'crate') {
         const item = this.level.openCrate(tx, ty);
+        this.sound({ kind: 'crate' });
         if (item && p.landedOn) this.bigImpact(); // Big Pip slammed down on it
         if (item) {
           const out = crateContents(item, tx, ty, this.fruitLooks);
@@ -292,6 +324,7 @@ export class LevelScene implements Scene {
       } else if (tile === 'cracked' && this.form.big && p.bumped.some((b) => b.x === tx * TILE && b.y === ty * TILE)) {
         this.level.setTile(tx, ty, 'air');
         this.particles.burst(tx * TILE + TILE / 2, ty * TILE + TILE / 2, '#9a96a8', 10); // stone chips
+        this.sound({ kind: 'stone' });
         this.bigImpact();
       }
     }
@@ -331,6 +364,7 @@ export class LevelScene implements Scene {
         // Landing on two at once counts for both.
         this.defeat(e);
         this.run.stomped();
+        this.sound({ kind: 'stomp', chain: this.run.chain });
         bounced = true;
         this.freeze = FX.STOMP_FREEZE;
       } else if (this.form.star > 0) {
@@ -338,7 +372,10 @@ export class LevelScene implements Scene {
         this.run.score += RUN.STOMP_CHAIN[0];
       } else if (!this.invincible) {
         const result = this.form.hit();
-        if (result === 'shrunk') this.anim.hurtNow();
+        if (result === 'shrunk') {
+          this.anim.hurtNow();
+          this.sound({ kind: 'hurt' });
+        }
         if (result === 'dead') {
           this.die();
           return;
@@ -357,18 +394,23 @@ export class LevelScene implements Scene {
       switch (it.kind) {
         case 'fruit':
           this.run.addFruit();
+          this.sound({ kind: 'fruit' });
           break;
         case 'coin':
           this.run.addCoin(it.index);
+          this.sound({ kind: 'coin' });
           break;
         case 'mango':
           this.form.eatMango();
+          this.sound({ kind: 'powerUp' });
           break;
         case 'slingshot':
           this.form.takeSlingshot();
+          this.sound({ kind: 'powerUp' });
           break;
         case 'starfruit':
           this.form.eatStarfruit();
+          this.sound({ kind: 'starfruit' });
           break;
       }
     }
@@ -379,6 +421,7 @@ export class LevelScene implements Scene {
     const cps = this.level.checkpoints;
     while (this.checkpointsReached < cps.length && this.pip.feetX >= cps[this.checkpointsReached].x) {
       this.respawn = cps[this.checkpointsReached];
+      this.sound({ kind: 'checkpoint' });
       this.checkpointsReached++;
     }
   }

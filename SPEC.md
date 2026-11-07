@@ -288,6 +288,7 @@ Every decision has a default, so work can start straight away. Change any of the
 | Cleanup tool for generated images | A page in the game (`?art-tool=1`), built in Phase 5b | — |
 | Water | Deadly sea water in pits (`~`), see-through with a rippling surface (decided in Phase 5b) | Shallow rock pools to wade through (could come later, e.g. the mangrove world) |
 | Foreground layer | Sparse palms pass in front of Pip, never over the display at the top (Phase 5b) | Everything behind Pip |
+| Sound before Options | On after the first key or tap; music 60%, effects 80%; M mutes (saved). Sliders come with the Options screen (Phase 8) | — |
 | Calm mode before Options | `?calm=1`: no screen shake, no white flash, slow Starfruit shimmer (Phase 5b, until Phase 8) | — |
 | Hero | Pip, a young island courier | Your own character idea |
 | Look and resolution | 16-bit style at 480 × 270 widescreen | 384 × 216 (a little chunkier, less art to draw), or 8-bit at 320 × 180 |

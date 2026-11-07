@@ -197,6 +197,13 @@ export const WATER = {
   CYCLE_SPEED: 4, // colour steps per second on the rippling surface
 };
 
+/** Sound. */
+export const AUDIO = {
+  MUSIC_VOLUME: 0.6, // 0-1, music to start with (saved once changed)
+  SFX_VOLUME: 0.8, // 0-1, sound effects to start with
+  WAVES_LEVEL: 0.12, // how loud the beach waves are under the music
+};
+
 /** Debug overlay. */
 export const DEBUG = {
   FPS_SAMPLE_PERIOD: 0.5, // s between FPS readings

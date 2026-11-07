@@ -13,6 +13,7 @@ export type Action =
   | 'CONFIRM'
   | 'BACK'
   | 'ART_TOGGLE'
+  | 'MUTE'
   | 'DEBUG'
   | 'DEBUG_INVINCIBLE';
 
@@ -30,6 +31,7 @@ export const DEFAULT_KEYMAP: KeyMap = {
   CONFIRM: ['Enter', 'Space', 'PadA', 'PadStart'],
   BACK: ['Escape', 'PadB'],
   ART_TOGGLE: ['KeyT'], // switch between code-drawn and external sprites (until Options exists)
+  MUTE: ['KeyM'], // sound on/off (saved)
   DEBUG: ['Backquote'],
   DEBUG_INVINCIBLE: ['KeyI'], // only while the debug overlay is open
 };

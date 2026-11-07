@@ -20,5 +20,12 @@ if (new URLSearchParams(location.search).get('art-tool') === '1') {
     get lines() {
       return game.scenes.top?.debugLines?.() ?? [];
     },
+    /** 'locked' until the first key or tap, then 'running'. */
+    get audio() {
+      return game.audio.state;
+    },
+    get muted() {
+      return game.audio.settings.muted;
+    },
   };
 }

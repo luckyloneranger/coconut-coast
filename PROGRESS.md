@@ -229,3 +229,28 @@
 - External tile sheets for the auto-tiled ground aren't supported yet (code-only); the other tiles, sprites and every background layer can be replaced.
 
 **Next:** Phase 6, audio (the synth with echo, sound effects, the Palm Beach tune).
+
+## Phase 6 – Audio
+
+**Done**
+- **Synthesiser** (`src/audio/synth.ts`, Web Audio, no sound files):
+  - 8 voices; when all are busy, the one finishing soonest gives way.
+  - Instruments: an FM steel drum and marimba, a plucked bass, a warm two-oscillator pad, a brass stab, and a drum kit from noise and pitch drops (kick, snare, shaker, hand drum).
+  - A shared echo (dotted-eighth delay, softened feedback) and a reverb from a generated room impulse.
+- **Music** (all original): a sequencer with notes scheduled 0.15 s ahead, and songs written as note lines with bass, chords, off-beat marimba and drums generated from each song's chord list.
+  - **Palm Beach:** a laid-back steel-drum tune in F major, A–B–A, 24 bars at 104 bpm (about 55 s), looping.
+  - **Starfruit:** a bouncy 4-bar loop at 152 bpm, while invincible.
+  - **Jingles:** level clear, game over, and losing a life.
+- **Sound effects** (`sfx.ts`):
+  - Jump (lower for Big Pip), stomp (rising through a chain), fruit, Sun Coin, power-up, Starfruit, hurt.
+  - Crate, stone, throw, checkpoint, extra life, splash, and the low-Sun warning.
+  - The game rules only announce events; the audio plays them, so the tests stay silent.
+- **Ambience:** gentle waves under the music on the beach.
+- **Audio system:** unlocks on the first key, tap or pad button, and pauses with the tab. Music is 60% and effects 80% by default, all saved; M mutes, and "MUTED (M)" shows on screen.
+- **Tests:** 130 unit tests (13 new: note maths, the voice limit, the sequencer and seamless looping, every song well formed, Palm Beach length, never more than 8 notes at once, settings, and the game announcing jump, fruit and stomp sounds and choosing the right music) and 4 browser tests (new: sound locked until a key, then running with no errors, and M muting).
+
+**Known issues / notes**
+- I can't listen to the audio from here: the tests check it runs, schedules and mixes without errors, but not how it sounds. Please listen and tell me what to change.
+- Volume sliders come with the Options screen in Phase 8.
+
+**Next:** Phase 7, World 1 content (levels 1-1 to 1-3, the Big Shelly boss, the goal hut and the tally).
