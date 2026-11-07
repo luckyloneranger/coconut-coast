@@ -82,6 +82,14 @@ export class Renderer {
     this.ctx.drawImage(img, Math.round(x), Math.round(y), img.width * scale, img.height * scale);
   }
 
+  /** Draw with see-through (0 = invisible, 1 = solid): water over Pip, after-images. */
+  withAlpha(alpha: number, draw: () => void): void {
+    const before = this.ctx.globalAlpha;
+    this.ctx.globalAlpha = alpha;
+    draw();
+    this.ctx.globalAlpha = before;
+  }
+
   /** Text in the 8x8 bitmap font. */
   text(str: string, x: number, y: number, colour: string, align: TextAlign = 'left', scale = 1): void {
     const font = this.fontImage(colour);

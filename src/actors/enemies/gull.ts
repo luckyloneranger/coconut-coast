@@ -31,8 +31,9 @@ export class Gull extends Enemy {
 
   get frame(): number {
     // Flaps twice as fast while hovering before a dive.
+    if (this.swooping) return 6; // the dive pose
     const speed = this.warning > 0 ? 2 : 1;
-    return Math.floor((this.time * speed) / GULL.FRAME_TIME) % 4;
+    return Math.floor((this.time * speed) / GULL.FRAME_TIME) % 6; // the 6-frame flap
   }
 
   get swooping(): boolean {

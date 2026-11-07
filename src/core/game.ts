@@ -38,6 +38,8 @@ export class Game {
         debugOpen: () => this.debug.visible,
         // Relaxed mode (no Sun Meter) until the Options screen exists: ?relaxed=1
         relaxed: query.get('relaxed') === '1',
+        // Calm mode (less shake and flashing) until the Options screen exists: ?calm=1
+        calm: query.get('calm') === '1',
       }),
     );
   }

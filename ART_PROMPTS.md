@@ -35,13 +35,13 @@ Add this line to each: *"Same character as the reference image, identical colour
 | `pip-misc.png` | 6 frames: skid (leaning back, dust at feet), duck, look up, throwing a seed with a slingshot, hurt (knocked back, eyes shut), victory (both fists in the air). |
 | `pip-big.png` | The same 4 poses as the character sheet, but Pip is taller and stronger after eating a magic mango: about 24 × 40 pixels, a faint golden glow on the outline. |
 
-## 3. Enemies — one image each, 4 frames in a row
+## 3. Enemies — one image each, frames in a row (counts below match the game's sheets)
 
 | File | Prompt (after the style block) |
 | --- | --- |
-| `enemy-crab.png` | A small red beach crab with big snapping claws and googly eyes on stalks, about 24 × 16 pixels, 4-frame sideways walk cycle with claws opening and closing. |
-| `enemy-urchin.png` | A round purple sea urchin covered in pointed spikes, about 16 × 16 pixels, 4 frames of spikes slowly pulsing. |
-| `enemy-gull.png` | A grumpy white-and-grey seagull with a yellow beak, about 24 × 20 pixels, 4-frame flying cycle with wings flapping. |
+| `enemy-crab.png` | A small red beach crab with big snapping claws and googly eyes on stalks, about 24 × 16 pixels, 6-frame sideways walk cycle with claws opening and closing, then a 7th frame: hit, with X eyes and claws flung up. |
+| `enemy-urchin.png` | A round purple sea urchin covered in pointed spikes, about 16 × 16 pixels, 4 frames of spikes slowly pulsing, then a 5th frame: hit, spikes drooping. |
+| `enemy-gull.png` | A grumpy white-and-grey seagull with a yellow beak, about 24 × 20 pixels, facing left: a 6-frame flying cycle with wings flapping, a 7th frame diving beak-first, and an 8th frame: hit, wings flung up. |
 | `enemy-monkey.png` | A mischievous little brown monkey sitting on a palm frond holding a coconut, about 24 × 24 pixels, 4 frames: sitting, lifting the coconut, throwing, laughing. |
 | `enemy-frog.png` | A plump green swamp frog with orange spots, about 24 × 20 pixels, 4 frames: sitting, crouching, leaping, landing. |
 | `enemy-firebat.png` | A small bat made of glowing embers and dark rock, orange and red, about 24 × 16 pixels, 4-frame wing flap. |
@@ -54,7 +54,9 @@ Add this line to each: *"Same character as the reference image, identical colour
 
 > [style block, but use a flat magenta background only between tiles] A tile set for a side-scrolling platformer on a tropical beach, laid out on a grid of 16 × 16 pixel tiles with 1 pixel gaps: grassy sand ground top edge, left and right corners, plain sand fill, sandstone blocks, a thin wooden plank platform (left end, middle, right end), a palm tree trunk segment, palm fronds, a rock pool water surface, spikes made of sharp coral. Seamless where tiles join.
 
-## 6. Backgrounds — Palm Beach (wide images, no magenta)
+## 6. Backgrounds — Palm Beach (wide images)
+
+Sizes in the game (the cleanup tool resizes to these): sky 480 × 270 (fixed); far islands and sea 512 × 100 (3 copies in a row whose wave glints differ, for the sparkle); clouds 512 × 60; palm row 512 × 120 (3 copies in a row, the fronds swaying); foreground palm 64 × 200. All the scrolling ones must join seamlessly left to right.
 
 Ask for a wide image (16:9 or wider). These are layers that scroll at different speeds, so each must be a separate image.
 
@@ -63,6 +65,8 @@ Ask for a wide image (16:9 or wider). These are layers that scroll at different 
 | `bg-beach-sky.png` | 16-bit era pixel art background, a bright tropical sky with stepped colour bands from deep blue at the top to pale turquoise at the horizon, a few fluffy pixel clouds, a warm sun. No ground, no objects. Seamless left to right. |
 | `bg-beach-far.png` | 16-bit era pixel art, distant tropical islands and a calm turquoise sea along the bottom third, soft blue-green tones, the top two thirds flat magenta (#FF00FF). Seamless left to right. |
 | `bg-beach-near.png` | 16-bit era pixel art, a row of palm trees and leafy bushes along the bottom half, rich greens and warm browns, the top half flat magenta (#FF00FF). Seamless left to right. |
+| `bg-beach-clouds.png` | 16-bit era pixel art, a strip of puffy white clouds with soft blue shading underneath, on flat magenta (#FF00FF). Seamless left to right. |
+| `bg-beach-front.png` | 16-bit era pixel art, a single tall dark palm tree trunk with drooping fronds at the top, in deep shadowy greens and browns (it passes in front of the action), on flat magenta (#FF00FF). |
 
 ## 7. Bosses (later phases)
 
@@ -102,7 +106,7 @@ Any frame you don't have yet can be copied from the nearest one. The sprite view
 
 The game already has a switch for this: art drawn in code is the default, and external PNGs in `public/art/` replace it asset by asset (press T in the game, or add `?art=external` to the address).
 
-- **Straight from the image tool:** put the PNGs in `art/raw/` (or attach them in chat). They'll be the wrong size, so I'll run them through the cleanup step, which shrinks them onto the real pixel grid and cuts them into frames, and then put the results in `public/art/`.
+- **Straight from the image tool:** open the game with `?art-tool=1` (the cleanup tool). Pick the sheet it's for and the image; it finds the figures, shrinks them onto the real pixel grid, cuts the colours down and lines up the frames, next to the code-drawn version for comparison. Save the PNG into `public/art/`. Or attach the images in chat and I'll do it.
 - **Already the exact size** (for example, after you fix them up in a pixel editor): put them straight into `public/art/` with the asset's file name. The frame sizes are listed in `src/gfx/art/assets.ts`; frames sit side by side in one row. The game uses the file as soon as you reload.
 
 Either way, we compare each asset with the code-drawn version and keep whichever looks better.

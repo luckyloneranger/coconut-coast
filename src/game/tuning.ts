@@ -163,6 +163,38 @@ export const ART = {
   MAGENTA_TOLERANCE: 40, // 0-255: how far from pure #FF00FF a pixel can be and still turn see-through
 };
 
+/** Particles and screen effects. */
+export const FX = {
+  MAX_PARTICLES: 220, // the oldest are dropped past this
+  DUST_EVERY: 0.05, // s between dust puffs while skidding
+  LAND_DUST_SPEED: 220, // px/s: landing faster than this kicks up dust
+  SPARKLE_EVERY: 0.6, // s between sparkles on each fruit or coin (on average)
+  STOMP_FREEZE: 0.05, // s the game pauses on a stomp, for punch
+  SHAKE_TIME: 0.25, // s of screen shake on a big impact
+  SHAKE_SIZE: 2, // px the screen moves at most while shaking
+  AFTERIMAGE_SPEED: 175, // px/s: running at least this fast leaves after-images
+  AFTERIMAGES: 3, // how many trail behind
+  AFTERIMAGE_GAP: 0.05, // s between them
+};
+
+/** Parallax: how fast each background layer scrolls compared with the level (1 = with it). */
+export const PARALLAX = {
+  FAR: 0.1,
+  CLOUDS: 0.2,
+  CLOUD_DRIFT: 6, // px/s the clouds drift on their own
+  MID: 0.4,
+  FRONT: 1.2, // in front of Pip, a little faster than the level
+  FRONT_EVERY: 700, // px of level between foreground pieces
+  SWAY_TIME: 0.6, // s per palm sway frame
+};
+
+/** Sea water. */
+export const WATER = {
+  SINK: 6, // px Pip's feet go below the surface before it costs a life
+  ALPHA: 0.6, // how solid the water looks (Pip shows through)
+  CYCLE_SPEED: 4, // colour steps per second on the rippling surface
+};
+
 /** Debug overlay. */
 export const DEBUG = {
   FPS_SAMPLE_PERIOD: 0.5, // s between FPS readings

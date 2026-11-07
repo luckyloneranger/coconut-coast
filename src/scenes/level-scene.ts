@@ -17,7 +17,8 @@ import { SeedPod, canFire } from '../actors/seed-pod';
 import { overlaps } from '../actors/solids';
 import type { ArtLibrary } from '../gfx/art/library';
 import { RunState } from '../game/run-state';
-import { COMBAT, ITEMS, LEVEL, PIP, RUN } from '../game/tuning';
+import { COMBAT, FX, ITEMS, LEVEL, PIP, RUN, WATER } from '../game/tuning';
+import { Particles } from '../gfx/fx/particles';
 import { Camera } from '../world/camera';
 import { Level, type LevelSource, type Spot } from '../world/level';
 import { TILE } from '../world/tiles';
@@ -34,6 +35,17 @@ export interface LevelOptions {
   debugOpen?: () => boolean;
   /** No Sun Meter, and Pip keeps the form after losing a life. */
   relaxed?: boolean;
+  /** Less screen shake and flashing (Options later; ?calm=1 for now). */
+  calm?: boolean;
+}
+
+/** A faint copy of Pip left behind when running fast. */
+export interface AfterImage {
+  x: number; // feet, px
+  y: number;
+  frame: number;
+  flip: boolean;
+  age: number; // s
 }
 
 export class LevelScene implements Scene {
@@ -63,7 +75,18 @@ export class LevelScene implements Scene {
   invincible = false;
   /** s since the level (re)started, for animation. */
   time = 0;
+  readonly particles = new Particles();
+  afterImages: AfterImage[] = [];
+  /** s left of the stomp freeze (the game holds still for punch). */
+  freeze = 0;
+  /** s left of screen shake. */
+  shake = 0;
   private fruitLooks = 0;
+  private dustTimer = 0;
+  private afterTimer = 0;
+  private wasOnGround = false;
+  private fallSpeed = 0;
+  readonly calm: boolean;
   private readonly viewW: number;
   private readonly viewH: number;
   private readonly debugOpen: () => boolean;
@@ -79,6 +102,7 @@ export class LevelScene implements Scene {
     this.viewH = opts.viewH ?? 270;
     this.debugOpen = opts.debugOpen ?? (() => false);
     this.relaxed = opts.relaxed ?? false;
+    this.calm = opts.calm ?? false;
     this.restartLevel();
   }
 
@@ -96,6 +120,8 @@ export class LevelScene implements Scene {
     this.items = placedItems(this.level);
     this.fruitLooks = this.items.length;
     this.pods = [];
+    this.particles.clear();
+    this.afterImages = [];
     this.form.respawn(false);
     this.pip.h = PIP.HEIGHT;
     this.placeAt(this.respawn);
@@ -115,6 +141,12 @@ export class LevelScene implements Scene {
     this.time += dt;
     if (input.justPressed('ART_TOGGLE')) this.onArtToggle();
     if (this.debugOpen() && input.justPressed('DEBUG_INVINCIBLE')) this.invincible = !this.invincible;
+    this.particles.update(dt);
+    if (this.freeze > 0) {
+      this.freeze -= dt; // the stomp freeze: everything holds still for a moment
+      return;
+    }
+    this.shake = Math.max(0, this.shake - dt);
     if (this.gameOver > 0) {
       this.gameOver -= dt;
       if (this.gameOver <= 0) this.restartLevel();
@@ -127,6 +159,8 @@ export class LevelScene implements Scene {
     const p = this.pip;
     this.form.update(dt);
     const feetBefore = p.feetY;
+    this.wasOnGround = p.onGround;
+    this.fallSpeed = p.vy;
     const controls = readControls(input);
     const near = this.level.boxesNear(p.box);
     p.update(dt, controls, near.solids, near.oneWays);
@@ -142,6 +176,13 @@ export class LevelScene implements Scene {
       this.die(); // fell in a pit
       return;
     }
+    if (this.level.waterAt(p.feetX, p.feetY - WATER.SINK)) {
+      // Into the sea: a big splash at the surface, and a life lost.
+      this.particles.splash(p.feetX, Math.floor((p.feetY - WATER.SINK) / TILE) * TILE);
+      this.die();
+      return;
+    }
+    this.kickDust(dt);
     if (p.onGround) this.run.landed();
     if (this.form.canThrow && input.justPressed('THROW') && canFire(this.pods)) {
       this.anim.throwNow();
@@ -164,6 +205,49 @@ export class LevelScene implements Scene {
     if (flag && !this.finished && Math.abs(p.feetX - flag.x) < FLAG_REACH && p.feetY > flag.y - 4 * TILE) this.finished = true;
     this.camera.update(dt, p);
     this.animate(dt);
+    this.trackAfterImages(dt);
+    this.sparkleItems(dt);
+  }
+
+  /** Dust when skidding, and when landing hard. */
+  private kickDust(dt: number): void {
+    const p = this.pip;
+    this.dustTimer -= dt;
+    if (p.skidding && this.dustTimer <= 0) {
+      this.particles.dust(p.feetX, p.feetY, 2, Math.sign(p.vx));
+      this.dustTimer = FX.DUST_EVERY;
+    }
+    if (p.onGround && !this.wasOnGround && this.fallSpeed > FX.LAND_DUST_SPEED) this.particles.dust(p.feetX, p.feetY, 6);
+  }
+
+  /** Faint copies of Pip trail behind at full running speed. */
+  private trackAfterImages(dt: number): void {
+    const p = this.pip;
+    for (const a of this.afterImages) a.age += dt;
+    this.afterImages = this.afterImages.filter((a) => a.age < FX.AFTERIMAGES * FX.AFTERIMAGE_GAP);
+    this.afterTimer -= dt;
+    if (Math.abs(p.vx) >= FX.AFTERIMAGE_SPEED && this.afterTimer <= 0) {
+      this.afterImages.push({ x: p.feetX, y: p.feetY, frame: this.anim.frame(this.animState), flip: p.facingLeft, age: 0 });
+      this.afterTimer = FX.AFTERIMAGE_GAP;
+    }
+  }
+
+  /** Now and then a twinkle on each fruit and coin. */
+  private sparkleItems(dt: number): void {
+    for (const it of this.items) {
+      if (!it.moving && this.particles.random() < dt / FX.SPARKLE_EVERY) this.particles.sparkle(it.x, it.y);
+    }
+  }
+
+  /** Defeat an enemy: it shows its hit frame, then pops into little stars. */
+  private defeat(e: Enemy): void {
+    e.stomp(COMBAT.SQUASH_TIME);
+    this.particles.pop(e.x + e.w / 2, e.y + e.h / 2);
+  }
+
+  /** A big impact: the screen shakes a little (not in calm mode). */
+  private bigImpact(): void {
+    if (!this.calm) this.shake = FX.SHAKE_TIME;
   }
 
   /** Feed Pip's state to the animation picker. */
@@ -198,6 +282,7 @@ export class LevelScene implements Scene {
       const tile = this.level.tileAt(tx, ty);
       if (tile === 'crate') {
         const item = this.level.openCrate(tx, ty);
+        if (item && p.landedOn) this.bigImpact(); // Big Pip slammed down on it
         if (item) {
           const out = crateContents(item, tx, ty, this.fruitLooks);
           this.fruitLooks += out.length;
@@ -205,6 +290,8 @@ export class LevelScene implements Scene {
         }
       } else if (tile === 'cracked' && this.form.big && p.bumped.some((b) => b.x === tx * TILE && b.y === ty * TILE)) {
         this.level.setTile(tx, ty, 'air');
+        this.particles.burst(tx * TILE + TILE / 2, ty * TILE + TILE / 2, '#9a96a8', 10); // stone chips
+        this.bigImpact();
       }
     }
   }
@@ -215,7 +302,7 @@ export class LevelScene implements Scene {
       if (pod.gone) continue;
       for (const e of this.enemies) {
         if (e.awake && e.active && overlaps(pod.box, e.box)) {
-          e.stomp(COMBAT.SQUASH_TIME); // a pod defeats every kind, even the urchin
+          this.defeat(e); // a pod defeats every kind, even the urchin
           this.run.score += RUN.STOMP_CHAIN[0];
           pod.gone = true;
           break;
@@ -241,11 +328,12 @@ export class LevelScene implements Scene {
       if (touch === 'none') continue;
       if (touch === 'stomp' || bounced) {
         // Landing on two at once counts for both.
-        e.stomp(COMBAT.SQUASH_TIME);
+        this.defeat(e);
         this.run.stomped();
         bounced = true;
+        this.freeze = FX.STOMP_FREEZE;
       } else if (this.form.star > 0) {
-        e.stomp(COMBAT.SQUASH_TIME); // Starfruit: anything touched is defeated
+        this.defeat(e); // Starfruit: anything touched is defeated
         this.run.score += RUN.STOMP_CHAIN[0];
       } else if (!this.invincible) {
         const result = this.form.hit();
@@ -264,6 +352,7 @@ export class LevelScene implements Scene {
       it.update(dt, this.level);
       if (!it.touches(this.pip.box)) continue;
       it.collected = true;
+      this.particles.burst(it.x, it.y, it.kind === 'coin' ? '#ffd040' : '#fff2b0', it.kind === 'fruit' ? 6 : 12);
       switch (it.kind) {
         case 'fruit':
           this.run.addFruit();
@@ -323,6 +412,7 @@ export class LevelScene implements Scene {
     this.placeAt(this.respawn);
     for (const e of this.enemies) e.reset();
     this.pods = [];
+    this.afterImages = [];
     this.camera.snapTo(this.pip);
   }
 

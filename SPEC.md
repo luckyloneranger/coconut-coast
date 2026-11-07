@@ -286,6 +286,9 @@ Every decision has a default, so work can start straight away. Change any of the
 | Ducking | Down on the ground ducks: the collision box gets shorter (Big Pip fits under 2-tile gaps) and Pip can't walk while ducked (decided in Phase 5) | Pose only |
 | Look up | Not a control, because Up is also Jump on the keyboard; the frame is kept for cutscenes (decided in Phase 5) | — |
 | Cleanup tool for generated images | A page in the game (`?art-tool=1`), built in Phase 5b | — |
+| Water | Deadly sea water in pits (`~`), see-through with a rippling surface (decided in Phase 5b) | Shallow rock pools to wade through (could come later, e.g. the mangrove world) |
+| Foreground layer | Sparse palms pass in front of Pip, never over the display at the top (Phase 5b) | Everything behind Pip |
+| Calm mode before Options | `?calm=1`: no screen shake, no white flash, slow Starfruit shimmer (Phase 5b, until Phase 8) | — |
 | Hero | Pip, a young island courier | Your own character idea |
 | Look and resolution | 16-bit style at 480 × 270 widescreen | 384 × 216 (a little chunkier, less art to draw), or 8-bit at 320 × 180 |
 | Art made in | **Decided:** drawn in code by default; external PNG sprites as an option, per asset (the user is trying an AI image generator with `ART_PROMPTS.md`) | Hand-drawn sheets from a pixel editor such as Aseprite |

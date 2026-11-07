@@ -72,6 +72,11 @@ export class Level {
     return this.isSolid(tx, ty) || this.tileAt(tx, ty) === 'oneway';
   }
 
+  /** Is there sea water at this point (px)? */
+  waterAt(x: number, y: number): boolean {
+    return this.tileAt(Math.floor(x / TILE), Math.floor(y / TILE)) === 'water';
+  }
+
   /** Change a tile (a crate opening, cracked stone breaking). */
   setTile(tx: number, ty: number, kind: TileKind): void {
     if (tx < 0 || tx >= this.cols || ty < 0 || ty >= this.rowsCount) return;

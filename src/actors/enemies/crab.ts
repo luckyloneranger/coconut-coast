@@ -16,7 +16,7 @@ export class Crab extends Enemy {
   }
 
   get frame(): number {
-    return Math.floor(this.time / CRAB.FRAME_TIME) % 4;
+    return Math.floor(this.time / CRAB.FRAME_TIME) % 6; // the 6-frame walk
   }
 
   protected move(dt: number, { level }: EnemyContext): void {

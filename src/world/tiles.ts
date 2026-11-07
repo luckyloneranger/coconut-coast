@@ -2,7 +2,7 @@
 
 export const TILE = 16; // px, a tile is 16 x 16
 
-export type TileKind = 'air' | 'ground' | 'oneway' | 'spikes' | 'crate' | 'used' | 'cracked';
+export type TileKind = 'air' | 'ground' | 'oneway' | 'spikes' | 'crate' | 'used' | 'cracked' | 'water';
 
 /** Tiles you can't pass through (stand on, bump into, hit your head on). */
 export const SOLID_TILES: ReadonlySet<TileKind> = new Set(['ground', 'crate', 'used', 'cracked']);
@@ -36,4 +36,5 @@ export const LEGEND: Readonly<Record<string, { tile: TileKind; marker?: MarkerKi
   T: { tile: 'crate', crate: 'starfruit' }, // crate with a Starfruit (invincible for a while)
   B: { tile: 'crate', crate: 'fruitBurst' }, // crate with a burst of fruit
   '%': { tile: 'cracked' }, // cracked stone: Big Pip breaks it from below
+  '~': { tile: 'water' }, // sea water: see-through, and sinking in costs a life
 };

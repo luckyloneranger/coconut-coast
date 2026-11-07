@@ -4,6 +4,7 @@ A 16-bit-style island platformer for the browser (work in progress). All charact
 
 - Design and rules: [`SPEC.md`](SPEC.md). Progress per phase: [`PROGRESS.md`](PROGRESS.md).
 - Prompts for making sprites with an image generator: [`ART_PROMPTS.md`](ART_PROMPTS.md).
+- Art cleanup tool: open the game with `?art-tool=1` to turn an image from an image generator into a game sheet (nothing is uploaded).
 - Sprite viewer: open the game with `?sprites=1` to see every sheet, animation and palette (← → sheet, ↑ ↓ animation, T code/external).
 
 ## Running it
@@ -26,4 +27,4 @@ Every sprite is drawn in code by default. To use your own art instead, put a PNG
 
 **Controls:** move with the arrows or A/D, jump with Space, Z, W or ↑ (hold for higher), run by holding Shift or X, throw seed pods with C (Sling Pip), duck with Down or S. Down + Jump drops through wooden platforms. On a gamepad: stick or d-pad to move, A to jump, RB/RT to run, B or X to throw, Start to pause.
 
-Debug overlay: add `?debug=1` to the address, or press the backtick key (then I for invincible). `?relaxed=1` turns off the Sun Meter.
+Debug overlay: add `?debug=1` to the address, or press the backtick key (then I for invincible). `?relaxed=1` turns off the Sun Meter; `?calm=1` turns off screen shake and flashing.

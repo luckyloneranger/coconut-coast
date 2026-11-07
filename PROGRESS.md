@@ -184,3 +184,38 @@
 - Ground tiles are code-only for now. An external tile layout comes with the cleanup tool in Phase 5b.
 
 **Next:** Phase 5b, art pass part 2 (parallax backgrounds, colour cycling, see-through water, particles, enemy sprites, and the cleanup tool for generated images).
+
+## Phase 5b – Art pass, part 2
+
+**Done**
+- **Parallax backgrounds** (original scenery, each a sheet that an external PNG can replace):
+  - A dithered sky with a sun (fixed).
+  - Far islands and sea (10%), with wave glints cycling colour over 3 frames.
+  - Drifting clouds (20%).
+  - A row of swaying palms and dunes (40%, 3 frames).
+  - Sparse foreground palms passing in front of Pip (120%), never over the display.
+  - The big layers are only built when first used.
+- **Sea water** (`~`): see-through (Pip shows through it), and the surface ripples by colour cycling. Sinking 6 px in costs a life, with a splash. The test level's wide pit is now sea.
+- **Particles** (repeatable, capped at 220):
+  - Dust when skidding and on hard landings.
+  - Splashes, and sparkles on fruit and coins.
+  - A burst when anything is collected, and stone chips when Big Pip breaks cracked stone.
+  - Enemies show a hit frame, then pop into little stars (replacing the dark squash box).
+- **Game feel:**
+  - A 0.05 s freeze on each stomp.
+  - A small screen shake on big impacts (Big Pip breaking stone or slamming a crate).
+  - After-images at full running speed.
+  - `?calm=1` turns off the shake and the white flash, and slows the Starfruit shimmer.
+- **Enemy art redrawn:** the crab with a 6-frame walk, the urchin with 4 pulse frames, and the gull with a 6-frame flap and a dive pose (shown while swooping). Each has a hit frame, and the sizes are unchanged.
+- **Cleanup tool** (`?art-tool=1`):
+  - Pick a raw generated image and the target sheet. It finds the background from the border and the figures on it, and picks a pixel size that fits the frame (or yours).
+  - Each game pixel takes the most common colour in its cell, so blurred edges drop out. Colours are cut down to 16 or fewer, and the frames are lined up bottom-centred.
+  - It shows the result next to the code-drawn version, and saves the PNG with the right file name. Nothing is uploaded.
+- `ART_PROMPTS.md`: the enemy frame counts, background sizes, two new background prompts, and how to use the tool.
+- **Tests:** 115 unit tests (18 new: particles, parallax wrapping, colour cycling, the new sheets, water, the stomp freeze and pop, shake on and off in calm mode, after-images, and every cleanup step on made-up images) and 3 browser tests (the level, the sprite viewer, and the cleanup tool turning a made-up image into a sheet).
+
+**Known issues / notes**
+- The cleanup tool expects separate figures with gaps on a plain background. Figures that touch become one, and very blurry images may need a manual pixel size.
+- External tile sheets for the auto-tiled ground aren't supported yet (code-only); the other tiles, sprites and every background layer can be replaced.
+
+**Next:** Phase 6, audio (the synth with echo, sound effects, the Palm Beach tune).
