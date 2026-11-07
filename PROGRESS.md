@@ -214,6 +214,14 @@
 - `ART_PROMPTS.md`: the enemy frame counts, background sizes, two new background prompts, and how to use the tool.
 - **Tests:** 115 unit tests (18 new: particles, parallax wrapping, colour cycling, the new sheets, water, the stomp freeze and pop, shake on and off in calm mode, after-images, and every cleanup step on made-up images) and 3 browser tests (the level, the sprite viewer, and the cleanup tool turning a made-up image into a sheet).
 
+- **Graphics pass after play-testing ("all the trees have some issue"):**
+  - **Palms:** a new palm painter (`palm.ts`). Trunks are smooth, curved and tapering, with lit and shaded sides and curved growth rings, rooted in a flared base. Crowns are a fountain of arching fronds, each with lit leaflets on top and shaded ones hanging below, back fronds darker, and coconuts under the crown.
+  - **Layers:** a new hazy far row of palms for depth (25% scroll). The near palm row (45%) is taller, and its dunes tuck under the play ground so the trunks rise above it, with leafy bushes and beach grass round them.
+  - **Foreground palm:** bigger and properly painted, 80% opaque so nothing in play is hidden, and less frequent.
+  - **Islands:** layered hills lit from the left with dithered shade, palm silhouettes on the ridges, beaches and surf, and a sea that deepens towards the viewer.
+  - **Clouds:** puffy heaps with lit tops and flat, shaded bases.
+  - **Ground edge:** grass tufts, tall tufts, flowers and shells scattered along the top of the ground (`decor-beach.png`, 4 tiles of 16 × 8).
+
 **Known issues / notes**
 - The cleanup tool expects separate figures with gaps on a plain background. Figures that touch become one, and very blurry images may need a manual pixel size.
 - External tile sheets for the auto-tiled ground aren't supported yet (code-only); the other tiles, sprites and every background layer can be replaced.

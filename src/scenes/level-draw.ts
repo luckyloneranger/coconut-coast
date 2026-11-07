@@ -2,7 +2,7 @@
 // GAME OVER card. Reads the scene's state; changes nothing.
 
 import type { Renderer } from '../core/renderer';
-import { BEACH_TILE } from '../gfx/art/code/tiles-beach';
+import { BEACH_TILE, decorFor } from '../gfx/art/code/tiles-beach';
 import { GroundTiles } from '../gfx/art/ground-tiles';
 import type { Variant } from '../gfx/art/palettes';
 import { UI } from '../gfx/palette';
@@ -60,9 +60,15 @@ function drawBackground(r: Renderer, s: LevelScene, cx: number, cy: number): voi
   const clouds = s.art.sheet('bgClouds');
   const cloudY = 22 - Math.round(cy * 0.05);
   for (let x = layerStart(cx, PARALLAX.CLOUDS, clouds.frameW, s.time * PARALLAX.CLOUD_DRIFT); x < r.width; x += clouds.frameW) r.sprite(clouds, 0, x, cloudY);
+  // The hazy far row of palms stands on a strip of beach in front of the sea.
+  const midFar = s.art.sheet('bgMidFar');
+  const swayFar = Math.floor(s.time / PARALLAX.SWAY_TIME + 1) % midFar.frames;
+  const midFarY = farY + 4;
+  for (let x = layerStart(cx, PARALLAX.MID_FAR, midFar.frameW); x < r.width; x += midFar.frameW) r.sprite(midFar, swayFar, x, midFarY);
+  // The near palm row: its dunes tuck just under the play ground, so the trunks rise above it.
   const mid = s.art.sheet('bgMid');
   const sway = Math.floor(s.time / PARALLAX.SWAY_TIME) % mid.frames;
-  const midY = 150 - Math.round(cy * 0.4);
+  const midY = 126 - Math.round(cy * 0.6);
   for (let x = layerStart(cx, PARALLAX.MID, mid.frameW); x < r.width; x += mid.frameW) r.sprite(mid, sway, x, midY);
 }
 
@@ -73,7 +79,7 @@ function drawFront(r: Renderer, s: LevelScene, cx: number, cy: number): void {
   for (let i = first; i <= first + 3; i++) {
     const x = i * PARALLAX.FRONT_EVERY + PARALLAX.FRONT_EVERY / 2 - cx * PARALLAX.FRONT;
     if (x < -front.frameW || x > r.width) continue;
-    r.sprite(front, 0, x, r.height - front.frameH + 30 - Math.round(cy * 0.2));
+    r.withAlpha(PARALLAX.FRONT_ALPHA, () => r.sprite(front, 0, x, r.height - front.frameH + 30 - Math.round(cy * 0.2)));
   }
 }
 
@@ -168,6 +174,7 @@ function drawEnemies(r: Renderer, s: LevelScene, cx: number, cy: number): void {
 function drawTiles(r: Renderer, s: LevelScene, cx: number, cy: number): void {
   const L = s.level;
   const sheet = s.art.sheet('tilesBeach');
+  const decor = s.art.sheet('decorBeach');
   const isGround = (tx: number, ty: number) => L.tileAt(tx, ty) === 'ground' || ty >= L.rowsCount; // the ground carries on below the level
   const isPlank = (tx: number, ty: number) => L.tileAt(tx, ty) === 'oneway';
   const tx0 = Math.floor(cx / TILE);
@@ -179,6 +186,11 @@ function drawTiles(r: Renderer, s: LevelScene, cx: number, cy: number): void {
       const y = ty * TILE - cy;
       switch (L.tileAt(tx, ty)) {
         case 'ground':
+          // A tuft, flower or shell on some of the tiles with open air above.
+          if (!isGround(tx, ty - 1) && L.tileAt(tx, ty - 1) === 'air') {
+            const d = decorFor(tx, ty);
+            if (d !== null) r.sprite(decor, d, x, y - 8);
+          }
           r.image(
             ground.get(
               {

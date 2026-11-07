@@ -182,9 +182,11 @@ export const PARALLAX = {
   FAR: 0.1,
   CLOUDS: 0.2,
   CLOUD_DRIFT: 6, // px/s the clouds drift on their own
-  MID: 0.4,
+  MID_FAR: 0.25, // the hazy far row of palms
+  MID: 0.45,
   FRONT: 1.2, // in front of Pip, a little faster than the level
-  FRONT_EVERY: 700, // px of level between foreground pieces
+  FRONT_EVERY: 960, // px of level between foreground pieces
+  FRONT_ALPHA: 0.8, // foreground palms are a little see-through, so nothing in play is ever hidden
   SWAY_TIME: 0.6, // s per palm sway frame
 };
 

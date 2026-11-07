@@ -176,3 +176,50 @@ function plank(end: 'left' | 'mid' | 'right' | 'one'): PixelGrid {
 /** The beach tile sheet, in BEACH_TILE order. */
 export const BEACH_TILES: readonly PixelMap[] = [crate(), usedCrate(), cracked(), spikes(), plank('left'), plank('mid'), plank('right'), plank('one')].map((g) => g.toMap(PROP_PAL));
 export const BEACH_TILE = { crate: 0, used: 1, cracked: 2, spikes: 3, plankLeft: 4, plankMid: 5, plankRight: 6, plankOne: 7 } as const;
+
+const DECOR_PAL = {
+  G: '#9be06a', // grass, lit
+  g: '#5cb84a', // grass
+  d: '#2e7a3a', // grass, dark
+  p: '#ff8ab0', // flower petals
+  P: '#ffd0e0', // petals, lit
+  y: '#ffd84a', // flower centre
+  s: '#f4e4cc', // shell
+  S: '#d8b898', // shell, shade
+  o: '#8a5a44', // shell outline
+};
+
+/** Little things that sit on top of the ground (16 x 8): grass tufts, a flower, a shell. */
+function decor(kind: 'tuft' | 'tallTuft' | 'flower' | 'shell'): PixelMap {
+  const g = new PixelGrid(16, 8);
+  if (kind === 'tuft' || kind === 'tallTuft') {
+    const h = kind === 'tuft' ? 4 : 7;
+    const blades = [[5, -1], [7, 0], [8, 1], [10, 2], [6, -2], [9, 1]];
+    for (const [x, lean] of blades) {
+      for (let k = 0; k < h - Math.abs(lean) / 2; k++) g.set(x + Math.round((lean * k) / h), 7 - k, k > h * 0.6 ? 'G' : k < 1 ? 'd' : 'g');
+    }
+  } else if (kind === 'flower') {
+    for (let k = 0; k < 5; k++) g.set(8, 7 - k, k < 2 ? 'd' : 'g'); // stem
+    g.set(7, 5, 'g');
+    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) g.set(8 + dx, 2 + dy, dx < 0 || dy < 0 ? 'P' : 'p');
+    g.set(8, 2, 'y');
+  } else {
+    g.ellipse(8, 6, 3, 2, 's');
+    g.rect(6, 7, 5, 1, 'S');
+    for (const x of [7, 9]) g.set(x, 5, 'S'); // ridges
+    g.outline('o');
+  }
+  return g.toMap(DECOR_PAL);
+}
+
+export const BEACH_DECOR: readonly PixelMap[] = [decor('tuft'), decor('tallTuft'), decor('flower'), decor('shell')];
+
+/** Which decoration (if any) sits on the ground tile at (tx, ty): a fixed scatter, about one tile in three. */
+export function decorFor(tx: number, ty: number): number | null {
+  const h = tileHash(tx * 3 + 1, ty * 5 + 2) % 100;
+  if (h < 16) return 0; // tuft
+  if (h < 24) return 1; // tall tuft
+  if (h < 29) return 2; // flower
+  if (h < 33) return 3; // shell
+  return null;
+}

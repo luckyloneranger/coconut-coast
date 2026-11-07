@@ -75,7 +75,9 @@ describe('the new art', () => {
     expect(ASSETS.bgFar.code).toHaveLength(3);
     expect(ASSETS.bgFar.code[0].rows).toEqual(ASSETS.bgFar.code[1].rows); // same picture...
     expect(ASSETS.bgFar.code[0].palette['1']).not.toBe(ASSETS.bgFar.code[1].palette['1']); // ...different glint colours
-    expect(mapsAreSize(ASSETS.bgMid.code, 512, 120)).toBe(true);
+    expect(mapsAreSize(ASSETS.bgMid.code, 512, 150)).toBe(true);
+    expect(mapsAreSize(ASSETS.bgMidFar.code, 512, 110)).toBe(true);
+    expect(mapsAreSize(ASSETS.bgFront.code, 120, 240)).toBe(true);
   });
 });
 

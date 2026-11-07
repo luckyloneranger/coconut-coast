@@ -56,7 +56,7 @@ Add this line to each: *"Same character as the reference image, identical colour
 
 ## 6. Backgrounds — Palm Beach (wide images)
 
-Sizes in the game (the cleanup tool resizes to these): sky 480 × 270 (fixed); far islands and sea 512 × 100 (3 copies in a row whose wave glints differ, for the sparkle); clouds 512 × 60; palm row 512 × 120 (3 copies in a row, the fronds swaying); foreground palm 64 × 200. All the scrolling ones must join seamlessly left to right.
+Sizes in the game (the cleanup tool resizes to these): sky 480 × 270 (fixed); far islands and sea 512 × 100 (3 copies in a row whose wave glints differ, for the sparkle); clouds 512 × 60; hazy far palm row 512 × 110 (3 sway copies); near palm row 512 × 150 (3 copies in a row, the fronds swaying); foreground palm 120 × 240. All the scrolling ones must join seamlessly left to right.
 
 Ask for a wide image (16:9 or wider). These are layers that scroll at different speeds, so each must be a separate image.
 
@@ -66,6 +66,8 @@ Ask for a wide image (16:9 or wider). These are layers that scroll at different 
 | `bg-beach-far.png` | 16-bit era pixel art, distant tropical islands and a calm turquoise sea along the bottom third, soft blue-green tones, the top two thirds flat magenta (#FF00FF). Seamless left to right. |
 | `bg-beach-near.png` | 16-bit era pixel art, a row of palm trees and leafy bushes along the bottom half, rich greens and warm browns, the top half flat magenta (#FF00FF). Seamless left to right. |
 | `bg-beach-clouds.png` | 16-bit era pixel art, a strip of puffy white clouds with soft blue shading underneath, on flat magenta (#FF00FF). Seamless left to right. |
+| `bg-beach-palms-far.png` | 16-bit era pixel art, a row of small distant palm trees on a strip of pale beach, soft hazy blue-green colours (far away), the top flat magenta (#FF00FF). Seamless left to right. |
+| `decor-beach.png` | 16-bit era pixel art, 4 tiny ground decorations in a row, each 16 × 8 pixels: a short grass tuft, a tall grass tuft, a small pink flower, a seashell. Flat magenta background. |
 | `bg-beach-front.png` | 16-bit era pixel art, a single tall dark palm tree trunk with drooping fronds at the top, in deep shadowy greens and browns (it passes in front of the action), on flat magenta (#FF00FF). |
 
 ## 7. Bosses (later phases)

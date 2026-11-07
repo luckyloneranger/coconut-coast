@@ -4,8 +4,8 @@
 
 import type { PixelMap } from './pixels';
 import { PIP_BIG_FRAMES, PIP_FRAME_COUNT, PIP_SLING_FRAMES, PIP_SMALL_FRAMES } from './code/pip';
-import { BEACH_TILES } from './code/tiles-beach';
-import { cloudLayer, farLayer, frontLayer, midLayer, skyLayer } from './code/backgrounds-beach';
+import { BEACH_DECOR, BEACH_TILES } from './code/tiles-beach';
+import { cloudLayer, farLayer, frontLayer, midFarLayer, midLayer, skyLayer } from './code/backgrounds-beach';
 import { ITEM_ICONS } from './code/items';
 import { CRAB_FRAMES, GULL_FRAMES, URCHIN_FRAMES } from './code/enemies';
 
@@ -31,12 +31,14 @@ export const ASSETS = {
   pipBig: { file: 'pip-big.png', frameW: 24, frameH: 40, frames: PIP_FRAME_COUNT, code: PIP_BIG_FRAMES },
   pipSling: { file: 'pip-sling.png', frameW: 24, frameH: 40, frames: PIP_FRAME_COUNT, code: PIP_SLING_FRAMES },
   tilesBeach: { file: 'tiles-beach.png', frameW: 16, frameH: 16, frames: 8, code: BEACH_TILES },
+  decorBeach: { file: 'decor-beach.png', frameW: 16, frameH: 8, frames: 4, code: BEACH_DECOR },
   // Palm Beach background layers (see ART_PROMPTS.md for sizes). The far sea and mid palms have 3 frames each.
   bgSky: lazy({ file: 'bg-beach-sky.png', frameW: 480, frameH: 270, frames: 1 }, () => [skyLayer()]),
   bgFar: lazy({ file: 'bg-beach-far.png', frameW: 512, frameH: 100, frames: 3 }, farLayer),
   bgClouds: lazy({ file: 'bg-beach-clouds.png', frameW: 512, frameH: 60, frames: 1 }, () => [cloudLayer()]),
-  bgMid: lazy({ file: 'bg-beach-near.png', frameW: 512, frameH: 120, frames: 3 }, midLayer),
-  bgFront: lazy({ file: 'bg-beach-front.png', frameW: 64, frameH: 200, frames: 1 }, () => [frontLayer()]),
+  bgMidFar: lazy({ file: 'bg-beach-palms-far.png', frameW: 512, frameH: 110, frames: 3 }, midFarLayer),
+  bgMid: lazy({ file: 'bg-beach-near.png', frameW: 512, frameH: 150, frames: 3 }, midLayer),
+  bgFront: lazy({ file: 'bg-beach-front.png', frameW: 120, frameH: 240, frames: 1 }, () => [frontLayer()]),
   items: { file: 'items.png', frameW: 16, frameH: 16, frames: 8, code: ITEM_ICONS },
   crab: { file: 'enemy-crab.png', frameW: 24, frameH: 16, frames: 7, code: CRAB_FRAMES },
   urchin: { file: 'enemy-urchin.png', frameW: 16, frameH: 16, frames: 5, code: URCHIN_FRAMES },
