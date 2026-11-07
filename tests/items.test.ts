@@ -243,6 +243,26 @@ describe('Starfruit in play', () => {
   });
 });
 
+describe('Starfruit and spikes', () => {
+  const SPIKES = { name: 'k', rows: ['P...^^^......', '#############'] };
+
+  it('spikes are safe to cross during a Starfruit', () => {
+    const scene = new LevelScene(SPIKES, ART, () => {});
+    scene.form.eatStarfruit();
+    play(scene, 2, ['RIGHT']);
+    expect(scene.deaths).toBe(0);
+    expect(scene.dying).toBe(0);
+    expect(scene.pip.x).toBeGreaterThan(7 * TILE); // walked right over them
+  });
+
+  it('without a Starfruit they still cost a life, even when Big', () => {
+    const scene = new LevelScene(SPIKES, ART, () => {});
+    scene.form.eatMango();
+    play(scene, 2, ['RIGHT']);
+    expect(scene.deaths + (scene.dying > 0 ? 1 : 0)).toBeGreaterThan(0);
+  });
+});
+
 describe('a hit while Big', () => {
   it('shrinks Pip instead of costing a life', () => {
     const scene = new LevelScene({ name: 'b', rows: ['P....c....', '##########'] }, ART, () => {});

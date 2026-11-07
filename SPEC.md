@@ -80,7 +80,7 @@ All values are starting points in `tuning.ts`, in pixels and seconds at 60 steps
 
 - Small Pip dies from one hit. A **Mango** makes Pip **Big** (taller sprite, can break cracked stone blocks with a head-butt). A hit while Big shrinks Pip back to small with a short invincible blink.
 - The **Slingshot** lets Pip fire seed pods in an arc (two on screen at most) that defeat every enemy. The pods skip off the ground twice, so they can hit low enemies (decided in Phase 4). Picking up the Slingshot also makes small Pip Big, so the forms go small → Big → Sling, and each hit goes back one step (decided in Phase 4).
-- Falling into a pit or the sea, or touching lava or spikes, costs a life whatever your form.
+- Falling into a pit or the sea, or touching lava or spikes, costs a life whatever your form. The one exception: during a Starfruit, spikes (and later lava) are safe to touch; pits and the sea still cost a life (decided after play-testing, Phase 5b).
 - 3 lives at the start; every 100 fruit gives an extra life. A **checkpoint flag** halfway through each level is where you restart. Losing every life sends you back to the world map with your progress kept but the level restarted.
 
 ### The Sun Meter (on by default, can be turned off)

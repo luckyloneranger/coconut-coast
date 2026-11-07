@@ -191,8 +191,9 @@ export class LevelScene implements Scene {
     this.updatePods(dt);
     this.updateEnemies(dt, feetBefore, controls.jumpHeld);
     if (this.dying > 0) return;
-    if (!this.invincible && touchesHazard(p.box, this.level.hazardsNear(p.box))) {
-      this.die(); // spikes cost a life whatever the form
+    // Spikes cost a life whatever the form, except during a Starfruit (then they're safe to cross).
+    if (!this.invincible && this.form.star <= 0 && touchesHazard(p.box, this.level.hazardsNear(p.box))) {
+      this.die();
       return;
     }
     this.updateItems(dt);

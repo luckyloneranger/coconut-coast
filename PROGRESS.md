@@ -222,6 +222,8 @@
   - **Clouds:** puffy heaps with lit tops and flat, shaded bases.
   - **Ground edge:** grass tufts, tall tufts, flowers and shells scattered along the top of the ground (`decor-beach.png`, 4 tiles of 16 × 8).
 
+- **Rule change after play-testing ("in star mode why did I die after touching spikes?"):** during a Starfruit, spikes are now safe to cross. They still cost a life otherwise, whatever the form, and pits and the sea always do. The spec is updated, with 2 new tests.
+
 **Known issues / notes**
 - The cleanup tool expects separate figures with gaps on a plain background. Figures that touch become one, and very blurry images may need a manual pixel size.
 - External tile sheets for the auto-tiled ground aren't supported yet (code-only); the other tiles, sprites and every background layer can be replaced.
