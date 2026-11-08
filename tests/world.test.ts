@@ -182,3 +182,36 @@ describe('pits', () => {
     for (let ty = 0; ty < L.rowsCount; ty++) expect(L.tileAt(21, ty)).toBe('air');
   });
 });
+
+describe('the test level layout (guards against items drifting into the wrong row)', () => {
+  const L = new Level(TEST_LEVEL);
+  it('the top rows are open sky', () => {
+    for (let ty = 0; ty < 4; ty++) for (let tx = 0; tx < L.cols; tx++) expect(TEST_LEVEL.rows[ty][tx]).toBe('.');
+  });
+  it('every Sun Coin sits on or inside something, never in empty mid-air', () => {
+    for (const c of L.coins) {
+      const tx = Math.floor(c.x / TILE);
+      const ty = Math.floor(c.y / TILE);
+      const below = TEST_LEVEL.rows[ty + 1]?.[tx];
+      expect(['#', '%', '=', '.'].includes(below ?? '#')).toBe(true);
+      // Something solid or a platform within 2 tiles below.
+      const support = [1, 2].some((d) => ['#', '%', '='].includes(TEST_LEVEL.rows[ty + d]?.[tx] ?? ''));
+      expect(support, `coin at column ${tx + 1}, row ${ty + 1}`).toBe(true);
+    }
+  });
+  it('the coin vault: cracked stone all round, with its cracked floor right under the coin', () => {
+    const vault = L.coins.find((c) => TEST_LEVEL.rows[Math.floor(c.y / TILE) + 1][Math.floor(c.x / TILE)] === '%')!;
+    expect(vault).toBeDefined();
+    const tx = Math.floor(vault.x / TILE);
+    const ty = Math.floor(vault.y / TILE);
+    expect(TEST_LEVEL.rows[ty - 1][tx]).toBe('%'); // roof
+    expect(TEST_LEVEL.rows[ty][tx - 2]).toBe('%'); // walls
+    expect(TEST_LEVEL.rows[ty][tx + 2]).toBe('%');
+  });
+  it('the gull flies over the sea pit', () => {
+    const gull = L.enemies.find((e) => e.kind === 'gull')!;
+    const col = Math.floor(gull.x / TILE);
+    expect(Math.floor(gull.y / TILE) - 1).toBeGreaterThanOrEqual(4);
+    expect([-4, -3, -2, -1, 0, 1, 2, 3, 4].some((d) => L.tileAt(col + d, 17) === 'water')).toBe(true);
+  });
+});

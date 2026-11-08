@@ -6,6 +6,8 @@ import { BEACH_TILE, decorFor } from '../gfx/art/code/tiles-beach';
 import { GroundTiles } from '../gfx/art/ground-tiles';
 import type { Variant } from '../gfx/art/palettes';
 import { UI } from '../gfx/palette';
+import { FLAG_FRAME } from '../gfx/art/code/ui-art';
+import { POPUP_TIME } from './level-scene';
 import { FORMS, FX, PARALLAX, WATER } from '../game/tuning';
 import { ENEMY_FRAME } from '../gfx/art/code/enemies';
 import { cycleIndex, layerStart } from '../gfx/fx/parallax';
@@ -15,7 +17,6 @@ import type { LevelScene } from './level-scene';
 
 const SEED = '#6a3a1a';
 const ground = new GroundTiles();
-const POLE_H = 3 * TILE; // px, checkpoint post height
 
 const WATER_SHADES = ['#3e8ed8', '#5aa8ec', '#8cd0f0', '#5aa8ec']; // the rippling surface cycles through these
 const WATER_BODY = '#2e6cb8';
@@ -28,12 +29,12 @@ export function drawLevel(r: Renderer, s: LevelScene): void {
   const cy = Math.round(s.camera.y) + shakeY;
   drawBackground(r, s, cx, cy);
   drawTiles(r, s, cx, cy);
-  drawStartMarks(r, s, cx, cy);
   drawCheckpoints(r, s, cx, cy);
   drawFlag(r, s, cx, cy);
+  drawShadows(r, s, cx, cy);
   drawItems(r, s, cx, cy);
   drawEnemies(r, s, cx, cy);
-  for (const pod of s.pods) r.rect(pod.x - 2 - cx, pod.y - 2 - cy, 4, 4, SEED);
+  for (const pod of s.pods) drawSeed(r, pod.x - cx, pod.y - cy, s.time);
   drawAfterImages(r, s, cx, cy);
   drawPip(r, s, cx, cy);
   drawParticles(r, s, cx, cy);
@@ -42,8 +43,9 @@ export function drawLevel(r: Renderer, s: LevelScene): void {
 
   drawHud(r, s.run, s.art, s.level.coins.length, s.time);
   if (s.invincible) r.text('INVINCIBLE (DEBUG)', r.width - 8, 26, UI.YELLOW, 'right');
-  if (s.showName) r.text(s.level.name, r.width / 2, 40, UI.WHITE, 'center', 2);
-  if (s.finished) r.text('END FLAG REACHED!', r.width / 2, 40, UI.YELLOW, 'center', 2);
+  drawPopups(r, s, cx, cy);
+  if (s.showName) drawNameCard(r, s);
+  if (s.finished) drawClearBanner(r, s);
   if (s.gameOver > 0) {
     r.rect(0, 100, r.width, 60, UI.INK);
     r.text('GAME OVER', r.width / 2, 116, UI.WHITE, 'center', 3);
@@ -155,7 +157,12 @@ function drawItems(r: Renderer, s: LevelScene, cx: number, cy: number): void {
     const bob = it.moving ? 0 : Math.round(Math.sin(s.time * 3 + it.x * 0.05) * 1.5);
     const x = it.x - sheet.frameW / 2 - cx;
     if (x < -sheet.frameW || x > r.width) continue;
-    r.sprite(sheet, it.frame, x, it.y - sheet.frameH / 2 - cy + bob);
+    if (it.kind === 'coin') {
+      const coin = s.art.sheet('coin');
+      r.sprite(coin, Math.floor(s.time * 10 + it.index * 2) % coin.frames, x, it.y - coin.frameH / 2 - cy + bob);
+    } else {
+      r.sprite(sheet, it.frame, x, it.y - sheet.frameH / 2 - cy + bob);
+    }
   }
 }
 
@@ -177,6 +184,37 @@ function drawTiles(r: Renderer, s: LevelScene, cx: number, cy: number): void {
   const decor = s.art.sheet('decorBeach');
   const isGround = (tx: number, ty: number) => L.tileAt(tx, ty) === 'ground' || ty >= L.rowsCount; // the ground carries on below the level
   const isPlank = (tx: number, ty: number) => L.tileAt(tx, ty) === 'oneway';
+  // Inside a pit: nothing solid below (it keeps going down), and ground at this height on both sides close by.
+  const groundNear = (tx: number, ty: number, dir: number) => {
+    for (let k = 1; k <= 8; k++) if (L.tileAt(tx + dir * k, ty) === 'ground') return true;
+    return false;
+  };
+  const isPitBack = (tx: number, ty: number): boolean => {
+    const t = L.tileAt(tx, ty);
+    if (t !== 'air' && t !== 'water') return false;
+    if (L.isFloor(tx, ty + 1) || L.tileAt(tx, ty + 1) === 'spikes') return false;
+    return groundNear(tx, ty, -1) && groundNear(tx, ty, 1) && ty >= surfaceRow(tx);
+  };
+  // The ground's top near this column (so back walls only start where the ground does).
+  const surfaceRow = (tx: number): number => {
+    let best = L.rowsCount;
+    for (const dx of [-1, 1]) {
+      for (let k = 1; k <= 8; k++) {
+        const col = tx + dx * k;
+        if (col < 0 || col >= L.cols) break;
+        let top = -1;
+        for (let row = 0; row < L.rowsCount; row++) if (L.tileAt(col, row) === 'ground') {
+          top = row;
+          break;
+        }
+        if (top >= 0) {
+          best = Math.min(best, Math.max(top, 0));
+          break;
+        }
+      }
+    }
+    return best;
+  };
   const tx0 = Math.floor(cx / TILE);
   const ty0 = Math.floor(cy / TILE);
   for (let ty = ty0; ty <= ty0 + Math.ceil(r.height / TILE); ty++) {
@@ -228,39 +266,98 @@ function drawTiles(r: Renderer, s: LevelScene, cx: number, cy: number): void {
           r.sprite(sheet, BEACH_TILE.cracked, x, y);
           break;
         case 'air':
-        case 'water': // drawn over everything later, see-through
+        case 'water': // water itself is drawn over everything later, see-through
+          if (isPitBack(tx, ty)) r.image(ground.back(tx, ty, !isPitBack(tx, ty - 1)), x, y);
           break;
       }
     }
   }
 }
 
-/** Height marks at 1 to 5 tiles above the start, to judge jumps. */
-function drawStartMarks(r: Renderer, s: LevelScene, cx: number, cy: number): void {
-  const st = s.level.start;
-  for (let n = 1; n <= 5; n++) {
-    const y = st.y - n * TILE - cy;
-    r.rect(st.x - 40 - cx, y, 10, 1, UI.WHITE);
-    r.text(String(n), st.x - 28 - cx, y - 4, UI.WHITE);
-  }
-}
-
-/** A post with a flag: down until passed, then up. */
+/** Checkpoint posts: the flag waits low and grey, then flies high and green once passed. */
 function drawCheckpoints(r: Renderer, s: LevelScene, cx: number, cy: number): void {
+  const sheet = s.art.sheet('flags');
+  const wave = Math.floor(s.time * 6) % 3;
   s.level.checkpoints.forEach((c, i) => {
-    const x = c.x - cx;
-    const y = c.y - cy;
     const up = i < s.checkpointsReached;
-    r.rect(x, y - POLE_H, 2, POLE_H, UI.GREY);
-    r.rect(x + 2, up ? y - POLE_H : y - 12, 10, 7, up ? UI.GREEN : UI.WHITE);
+    r.sprite(sheet, (up ? FLAG_FRAME.cpUp : FLAG_FRAME.cpDown) + wave, c.x - 5 - cx, c.y - sheet.frameH - cy);
   });
 }
 
+/** The goal flag, waving. */
 function drawFlag(r: Renderer, s: LevelScene, cx: number, cy: number): void {
   const f = s.level.flag;
   if (!f) return;
-  const x = f.x - cx;
-  const y = f.y - cy;
-  r.rect(x, y - 4 * TILE, 2, 4 * TILE, UI.WHITE);
-  r.rect(x + 2, y - 4 * TILE, 14, 9, s.finished ? UI.GREEN : UI.YELLOW);
+  const sheet = s.art.sheet('flags');
+  r.sprite(sheet, FLAG_FRAME.goal + (Math.floor(s.time * 6) % 3), f.x - 5 - cx, f.y - sheet.frameH - cy);
+}
+
+/** Soft shadows on the ground under Pip, enemies and items (smaller and fainter the higher they are). */
+function drawShadows(r: Renderer, s: LevelScene, cx: number, cy: number): void {
+  const L = s.level;
+  const shadow = (x: number, feet: number, w: number) => {
+    const col = Math.floor(x / TILE);
+    let row = Math.floor((feet - 1) / TILE);
+    // Find the ground below (within 4 tiles).
+    for (let k = 0; k < 5 && !L.isFloor(col, row); k++) row++;
+    if (!L.isFloor(col, row)) return;
+    const ground = row * TILE;
+    const lift = Math.max(0, ground - feet);
+    const scale = Math.max(0.3, 1 - lift / 70);
+    const half = Math.round((w / 2) * scale);
+    r.withAlpha(0.28 * scale, () => {
+      r.rect(x - half - cx, ground - 1 - cy, half * 2, 2, UI.INK);
+      r.rect(x - half + 2 - cx, ground + 1 - cy, half * 2 - 4, 1, UI.INK);
+    });
+  };
+  if (s.dying <= 0) shadow(s.pip.feetX, s.pip.feetY, 16);
+  for (const e of s.enemies) if (!e.defeated && e.kind !== 'gull') shadow(e.x + e.w / 2, e.y + e.h, e.w);
+  for (const e of s.enemies) if (!e.defeated && e.kind === 'gull') shadow(e.x + e.w / 2, e.y + e.h, e.w * 0.8);
+  for (const it of s.items) shadow(it.x, it.y + 6, 10);
+}
+
+/** A seed pod: a round brown seed with a highlight, tumbling. */
+function drawSeed(r: Renderer, x: number, y: number, time: number): void {
+  r.rect(x - 2, y - 3, 4, 6, SEED);
+  r.rect(x - 3, y - 2, 6, 4, SEED);
+  const spin = Math.floor(time * 16) % 4;
+  r.rect(x - 1 + (spin === 1 || spin === 2 ? 1 : 0), y - 2 + (spin >= 2 ? 1 : 0), 1, 1, '#d8a060');
+}
+
+/** Scores floating up from where they were earned, fading at the end. */
+function drawPopups(r: Renderer, s: LevelScene, cx: number, cy: number): void {
+  for (const pop of s.popups) {
+    const fade = pop.age > POPUP_TIME * 0.6 ? 1 - (pop.age - POPUP_TIME * 0.6) / (POPUP_TIME * 0.4) : 1;
+    const colour = pop.text === '1UP' ? UI.GREEN : pop.text.length >= 4 ? UI.YELLOW : UI.WHITE;
+    r.withAlpha(Math.max(0, fade), () => r.textShadow(pop.text, pop.x - cx, pop.y - cy, colour, 'center'));
+  }
+}
+
+/** The level's name on a ribbon at the start, sliding away at the end. */
+function drawNameCard(r: Renderer, s: LevelScene): void {
+  const fadeOut = Math.max(0, s.time - 2) / 0.5;
+  const y = 44 - Math.round(fadeOut * 60);
+  const w = Math.max(200, s.level.name.length * 16 + 40);
+  const x = Math.round(r.width / 2 - w / 2);
+  r.withAlpha(0.85, () => {
+    r.rect(x, y, w, 40, '#1a1430');
+    r.rect(x, y, w, 2, '#5a4a8a');
+    r.rect(x, y + 38, w, 2, '#5a4a8a');
+  });
+  r.textShadow(s.level.name, r.width / 2, y + 8, UI.YELLOW, 'center', 2, UI.INK, true);
+  r.textShadow('REACH THE FLAG!', r.width / 2, y + 27, UI.WHITE, 'center');
+}
+
+/** At the flag: a banner with how the level went. */
+function drawClearBanner(r: Renderer, s: LevelScene): void {
+  const slide = Math.min(1, s.clearTime / 0.3);
+  const y = Math.round(-50 + slide * 92);
+  r.withAlpha(0.85, () => {
+    r.rect(0, y, r.width, 46, '#1a1430');
+    r.rect(0, y, r.width, 2, UI.YELLOW);
+    r.rect(0, y + 44, r.width, 2, UI.YELLOW);
+  });
+  r.textShadow('COURSE CLEAR!', r.width / 2, y + 7, UI.YELLOW, 'center', 2, UI.INK, true);
+  const coins = `${s.run.coins.size}/${s.level.coins.length}`;
+  r.textShadow(`FRUIT ${s.run.fruit}   SUN COINS ${coins}   SCORE ${s.run.score}`, r.width / 2, y + 30, UI.WHITE, 'center');
 }

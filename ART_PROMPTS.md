@@ -70,6 +70,14 @@ Ask for a wide image (16:9 or wider). These are layers that scroll at different 
 | `decor-beach.png` | 16-bit era pixel art, 4 tiny ground decorations in a row, each 16 × 8 pixels: a short grass tuft, a tall grass tuft, a small pink flower, a seashell. Flat magenta background. |
 | `bg-beach-front.png` | 16-bit era pixel art, a single tall dark palm tree trunk with drooping fronds at the top, in deep shadowy greens and browns (it passes in front of the action), on flat magenta (#FF00FF). |
 
+## 6b. Small pieces (optional)
+
+| File | Size in the game | What |
+| --- | --- | --- |
+| `coin.png` | 6 frames of 16 × 16 | The Sun Coin turning: full face, narrowing to an edge and back |
+| `flags.png` | 9 frames of 32 × 64 | Checkpoint flag low and grey (3 waving frames), raised and green with a sun emblem (3), the red goal flag with a sun emblem (3) |
+| `icons.png` | 2 frames of 12 × 12 | Pip's head (for lives), a small sun |
+
 ## 7. Bosses (later phases)
 
 | File | Prompt (after the style block) |

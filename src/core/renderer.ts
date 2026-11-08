@@ -103,6 +103,15 @@ export class Renderer {
     }
   }
 
+  /** Text with a dark drop shadow (and optional outline), readable over any background. */
+  textShadow(str: string, x: number, y: number, colour: string, align: TextAlign = 'left', scale = 1, shadow = '#1a1428', outline = false): void {
+    if (outline) {
+      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) this.text(str, x + dx * scale, y + dy * scale, shadow, align, scale);
+    }
+    this.text(str, x + scale, y + scale, shadow, align, scale);
+    this.text(str, x, y, colour, align, scale);
+  }
+
   /** Copy the finished frame to the screen. */
   present(): void {
     this.screenCtx.imageSmoothingEnabled = false;

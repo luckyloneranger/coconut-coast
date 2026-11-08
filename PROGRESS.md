@@ -253,4 +253,19 @@
 - I can't listen to the audio from here: the tests check it runs, schedules and mixes without errors, but not how it sounds. Please listen and tell me what to change.
 - Volume sliders come with the Options screen in Phase 8.
 
+## Level polish (after "refine this level further, focus on the small things")
+
+**Done**
+- **Bug fixed:** my Phase 3 and 4 level-editing scripts matched rows by their text, and several empty sky rows were identical, so some changes landed in the wrong empty row. The gull sat on the top edge, the high-route fruit and a Sun Coin floated near the top, the vault's cracked floor hung in the sky (the stray grey blocks), and the ceiling coin floated in mid-air. Everything is back where it belongs, the file is now rewritten by row position, and 4 new tests guard the layout (the top rows are sky, every coin is supported, the vault is intact, the gull is over the sea).
+- **Readable text:** a drop-shadow and outline style (`textShadow`) for everything over the scenery.
+- **Display:** a two-tone bar with Pip's head and lives, a shadowed score, a fruit counter, Sun Coin slots that show a faint coin until found and then spin, and a framed Sun Meter with a sun icon, shine, quarter marks and a red flash when low.
+- **Start:** a name card ribbon ("0-1 SANDBOX BEACH / REACH THE FLAG!") that slides away; the Phase 1 height marks are gone.
+- **Flags:** waving checkpoint flags (grey and low, then green and high once passed) and a red goal flag, both with the sun emblem (`flags.png`).
+- **Sun Coins spin** (`coin.png`, 6 frames). **Seed pods** are round tumbling seeds. **Soft shadows** fall under Pip, enemies and items, smaller and fainter the higher they are.
+- **Score popups:** "+10" for fruit, coin points, stomp chain values, and "1UP", floating up and fading.
+- **Pits** show shadowed sand walls instead of the far beach, so they read as holes in the ground (also behind the sea water).
+- **Coin vault:** all cracked stone, so it reads as a vault Big Pip breaks into from below.
+- **Course clear:** a "COURSE CLEAR!" banner with fruit, Sun Coins and score, bursts of colour round Pip, and the level-clear jingle.
+- **Tests:** 136 unit tests (6 new) and 4 browser tests.
+
 **Next:** Phase 7, World 1 content (levels 1-1 to 1-3, the Big Shelly boss, the goal hut and the tally).

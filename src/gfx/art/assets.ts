@@ -5,6 +5,7 @@
 import type { PixelMap } from './pixels';
 import { PIP_BIG_FRAMES, PIP_FRAME_COUNT, PIP_SLING_FRAMES, PIP_SMALL_FRAMES } from './code/pip';
 import { BEACH_DECOR, BEACH_TILES } from './code/tiles-beach';
+import { COIN_FRAMES, FLAG_FRAMES, ICON_FRAMES } from './code/ui-art';
 import { cloudLayer, farLayer, frontLayer, midFarLayer, midLayer, skyLayer } from './code/backgrounds-beach';
 import { ITEM_ICONS } from './code/items';
 import { CRAB_FRAMES, GULL_FRAMES, URCHIN_FRAMES } from './code/enemies';
@@ -40,6 +41,9 @@ export const ASSETS = {
   bgMid: lazy({ file: 'bg-beach-near.png', frameW: 512, frameH: 150, frames: 3 }, midLayer),
   bgFront: lazy({ file: 'bg-beach-front.png', frameW: 120, frameH: 240, frames: 1 }, () => [frontLayer()]),
   items: { file: 'items.png', frameW: 16, frameH: 16, frames: 8, code: ITEM_ICONS },
+  coin: { file: 'coin.png', frameW: 16, frameH: 16, frames: 6, code: COIN_FRAMES },
+  flags: { file: 'flags.png', frameW: 32, frameH: 64, frames: 9, code: FLAG_FRAMES },
+  icons: { file: 'icons.png', frameW: 12, frameH: 12, frames: 2, code: ICON_FRAMES },
   crab: { file: 'enemy-crab.png', frameW: 24, frameH: 16, frames: 7, code: CRAB_FRAMES },
   urchin: { file: 'enemy-urchin.png', frameW: 16, frameH: 16, frames: 5, code: URCHIN_FRAMES },
   gull: { file: 'enemy-gull.png', frameW: 24, frameH: 20, frames: 8, code: GULL_FRAMES },

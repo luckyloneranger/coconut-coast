@@ -43,6 +43,15 @@ export interface LevelOptions {
   sound?: SoundSink;
 }
 
+/** A score that floats up from where it was earned ("+10", "200", "1UP"). */
+export interface Popup {
+  x: number; // px, in the level
+  y: number;
+  text: string;
+  age: number; // s
+}
+export const POPUP_TIME = 0.8; // s a score popup lasts
+
 /** A faint copy of Pip left behind when running fast. */
 export interface AfterImage {
   x: number; // feet, px
@@ -81,6 +90,9 @@ export class LevelScene implements Scene {
   time = 0;
   readonly particles = new Particles();
   afterImages: AfterImage[] = [];
+  popups: Popup[] = [];
+  /** s since the end flag was reached (for the celebration). */
+  clearTime = 0;
   /** s left of the stomp freeze (the game holds still for punch). */
   freeze = 0;
   /** s left of screen shake. */
@@ -129,6 +141,8 @@ export class LevelScene implements Scene {
     this.pods = [];
     this.particles.clear();
     this.afterImages = [];
+    this.popups = [];
+    this.clearTime = 0;
     this.form.respawn(false);
     this.pip.h = PIP.HEIGHT;
     this.placeAt(this.respawn);
@@ -149,6 +163,12 @@ export class LevelScene implements Scene {
     if (input.justPressed('ART_TOGGLE')) this.onArtToggle();
     if (this.debugOpen() && input.justPressed('DEBUG_INVINCIBLE')) this.invincible = !this.invincible;
     this.particles.update(dt);
+    for (const pop of this.popups) {
+      pop.age += dt;
+      pop.y -= 30 * dt; // floats up
+    }
+    this.popups = this.popups.filter((pop) => pop.age < POPUP_TIME);
+    if (this.finished) this.celebrate(dt);
     if (this.freeze > 0) {
       this.freeze -= dt; // the stomp freeze: everything holds still for a moment
       return;
@@ -229,7 +249,10 @@ export class LevelScene implements Scene {
     const low = !this.relaxed && this.run.sun < RUN.SUN_LOW;
     if (low && !this.sunWarned) this.sound({ kind: 'sunLow' });
     this.sunWarned = low;
-    if (this.lastLives && this.run.lives > this.lastLives) this.sound({ kind: 'extraLife' });
+    if (this.lastLives && this.run.lives > this.lastLives) {
+      this.sound({ kind: 'extraLife' });
+      this.popup(p.feetX, p.y - 8, '1UP');
+    }
     this.lastLives = this.run.lives;
   }
 
@@ -250,6 +273,26 @@ export class LevelScene implements Scene {
       this.dustTimer = FX.DUST_EVERY;
     }
     if (p.onGround && !this.wasOnGround && this.fallSpeed > FX.LAND_DUST_SPEED) this.particles.dust(p.feetX, p.feetY, 6);
+  }
+
+  /** Float a score up from a spot in the level. */
+  popup(x: number, y: number, text: string): void {
+    this.popups.push({ x, y, text, age: 0 });
+  }
+
+  /** At the end flag: bursts of colour round Pip now and then, for a couple of seconds. */
+  private celebrate(dt: number): void {
+    const before = this.clearTime;
+    this.clearTime += dt;
+    const colours = ['#ffd84a', '#5ccc6a', '#ff8ab0', '#7ad0ff', '#ffffff'];
+    for (let k = 0; k < 4; k++) {
+      const at = k * 0.35;
+      if (before < at && this.clearTime >= at) {
+        const x = this.pip.feetX + (k % 2 ? 40 : -40);
+        this.particles.burst(x, this.pip.y - 20 - k * 8, colours[k % colours.length], 14);
+        this.particles.pop(x, this.pip.y - 20);
+      }
+    }
   }
 
   /** Faint copies of Pip trail behind at full running speed. */
@@ -338,6 +381,7 @@ export class LevelScene implements Scene {
         if (e.awake && e.active && overlaps(pod.box, e.box)) {
           this.defeat(e); // a pod defeats every kind, even the urchin
           this.run.score += RUN.STOMP_CHAIN[0];
+          this.popup(e.x + e.w / 2, e.y, String(RUN.STOMP_CHAIN[0]));
           pod.gone = true;
           break;
         }
@@ -363,13 +407,15 @@ export class LevelScene implements Scene {
       if (touch === 'stomp' || bounced) {
         // Landing on two at once counts for both.
         this.defeat(e);
-        this.run.stomped();
+        const points = this.run.stomped();
+        this.popup(e.x + e.w / 2, e.y, points ? String(points) : '1UP');
         this.sound({ kind: 'stomp', chain: this.run.chain });
         bounced = true;
         this.freeze = FX.STOMP_FREEZE;
       } else if (this.form.star > 0) {
         this.defeat(e); // Starfruit: anything touched is defeated
         this.run.score += RUN.STOMP_CHAIN[0];
+        this.popup(e.x + e.w / 2, e.y, String(RUN.STOMP_CHAIN[0]));
       } else if (!this.invincible) {
         const result = this.form.hit();
         if (result === 'shrunk') {
@@ -394,10 +440,12 @@ export class LevelScene implements Scene {
       switch (it.kind) {
         case 'fruit':
           this.run.addFruit();
+          this.popup(it.x, it.y - 6, `+${RUN.FRUIT_POINTS}`);
           this.sound({ kind: 'fruit' });
           break;
         case 'coin':
           this.run.addCoin(it.index);
+          this.popup(it.x, it.y - 6, String(RUN.COIN_POINTS));
           this.sound({ kind: 'coin' });
           break;
         case 'mango':

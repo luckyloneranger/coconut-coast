@@ -145,3 +145,23 @@ describe('game feel', () => {
     expect(scene.afterImages.length).toBeLessThanOrEqual(FX.AFTERIMAGES);
   });
 });
+
+describe('level polish', () => {
+  it('collecting fruit floats up a "+10" that fades away', () => {
+    const scene = new LevelScene({ name: 'p', rows: ['P.*...', '######'] }, ART, () => {});
+    for (let t = 0; t < 0.5; t += DT) scene.update(DT, input(['RIGHT']));
+    expect(scene.popups.some((p) => p.text === '+10')).toBe(true);
+    for (let t = 0; t < 1; t += DT) scene.update(DT, input());
+    expect(scene.popups).toHaveLength(0);
+  });
+
+  it('reaching the flag starts the celebration: bursts of colour round Pip', () => {
+    const scene = new LevelScene({ name: 'f', rows: ['P..F..', '######'] }, ART, () => {});
+    for (let t = 0; t < 1.5 && !scene.finished; t += DT) scene.update(DT, input(['RIGHT']));
+    expect(scene.finished).toBe(true);
+    for (let t = 0; t < 1.2; t += DT) scene.update(DT, input());
+    expect(scene.clearTime).toBeGreaterThan(1);
+    expect(scene.particles.list.some((p) => p.kind === 'burst' || p.kind === 'star')).toBe(true);
+    expect(scene.song).toBe('levelClear');
+  });
+});
